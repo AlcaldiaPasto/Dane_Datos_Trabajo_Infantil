@@ -1,31 +1,78 @@
-﻿import AppShell from "@/components/layout/app-shell";
+import AppShell from "@/components/layout/app-shell";
 import ComparisonKpis from "@/components/comparison/comparison-kpis";
 import ComparisonChart from "@/components/comparison/comparison-chart";
 import EmptyState from "@/components/ui/empty-state";
+import Card from "@/components/ui/card";
 import { buildComparisonSnapshot } from "@/lib/analytics/comparison-service";
+import { buildDashboardRecords } from "@/lib/analytics/dashboard-data-service";
 import { listDatasets } from "@/lib/datasets/dataset-service";
 
 export const dynamic = "force-dynamic";
 
-export default async function ComparisonPage() {
+function ComparisonControls({ years, baseYear, targetYear }) {
+  return (
+    <Card title="Seleccionar comparacion" subtitle="Puedes comparar 2024 contra otro ano limpio o elegir dos anos disponibles.">
+      <form className="grid gap-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
+        <label className="block">
+          <span className="font-mono text-[11px] uppercase tracking-[0.24em] text-muted">Ano base</span>
+          <select
+            name="baseYear"
+            defaultValue={baseYear}
+            className="mt-2 w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm font-semibold text-foreground outline-none transition focus:border-accent focus:ring-4 focus:ring-teal-100"
+          >
+            {years.map((year) => (
+              <option key={`base-${year}`} value={year}>{year}</option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          <span className="font-mono text-[11px] uppercase tracking-[0.24em] text-muted">Ano comparado</span>
+          <select
+            name="targetYear"
+            defaultValue={targetYear}
+            className="mt-2 w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm font-semibold text-foreground outline-none transition focus:border-accent focus:ring-4 focus:ring-teal-100"
+          >
+            {years.map((year) => (
+              <option key={`target-${year}`} value={year}>{year}</option>
+            ))}
+          </select>
+        </label>
+        <button
+          type="submit"
+          className="rounded-2xl bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
+        >
+          Comparar
+        </button>
+      </form>
+    </Card>
+  );
+}
+
+export default async function ComparisonPage({ searchParams }) {
+  const params = await searchParams;
   const datasets = await listDatasets();
-  const snapshot = buildComparisonSnapshot(datasets);
+  const records = await buildDashboardRecords(datasets);
+  const snapshot = buildComparisonSnapshot(datasets, records, {
+    baseYear: params?.baseYear,
+    targetYear: params?.targetYear,
+  });
 
   return (
     <AppShell
       title="Comparacion anual"
-      description="Pantalla preparada para comparar 2024 con cualquier otro ano limpio disponible en la sesion."
+      description="Comparacion real entre anos limpios disponibles en la sesion."
       sidebarContext={{
         eyebrow: "Analisis anual",
         title: "Comparacion anual",
-        description: "Compara 2024 contra otro ano limpio cuando exista una segunda base disponible.",
-        badge: snapshot.isReady ? "Disponible" : "Sin contraste",
+        description: "Compara indicadores entre dos anos limpios y validados.",
+        badge: snapshot.isReady ? `${snapshot.baseYear} vs ${snapshot.targetYear}` : "Sin contraste",
       }}
     >
       {snapshot.isReady ? (
         <div className="flex min-h-full flex-col space-y-6">
-          <ComparisonKpis items={snapshot.kpis} />
-          <ComparisonChart title="Tendencia anual" message={snapshot.message} />
+          <ComparisonControls years={snapshot.availableYears} baseYear={snapshot.baseYear} targetYear={snapshot.targetYear} />
+          <ComparisonKpis items={snapshot.metrics} baseYear={snapshot.baseYear} targetYear={snapshot.targetYear} />
+          <ComparisonChart snapshot={snapshot} />
         </div>
       ) : (
         <EmptyState title="Comparacion no disponible" description={snapshot.message} />

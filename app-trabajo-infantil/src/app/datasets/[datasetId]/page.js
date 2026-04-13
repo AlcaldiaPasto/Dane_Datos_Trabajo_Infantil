@@ -4,6 +4,7 @@ import DatasetColumnsTable from "@/components/detail/dataset-columns-table";
 import DatasetPreviewTable from "@/components/detail/dataset-preview-table";
 import CleaningRulesList from "@/components/detail/cleaning-rules-list";
 import IssueList from "@/components/detail/issue-list";
+import DatasetExportPanel from "@/components/datasets/dataset-export-panel";
 import { getDatasetDetailById } from "@/lib/datasets/dataset-service";
 
 export const dynamic = "force-dynamic";
@@ -25,6 +26,9 @@ export default async function DatasetDetailPage({ params }) {
       }}
     >
       <div className="flex min-h-full flex-col">
+        <div className="mb-6">
+          <DatasetExportPanel dataset={dataset} />
+        </div>
         <div className="grid items-stretch gap-6 xl:grid-cols-[1.1fr_0.9fr]">
           <DatasetColumnsTable columns={dataset.columns.slice(0, 24)} />
           <CleaningRulesList rules={dataset.cleaningRulesApplied} />

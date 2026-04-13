@@ -1,4 +1,4 @@
-﻿# App Trabajo Infantil
+# App Trabajo Infantil
 
 Aplicacion web en Next.js con JavaScript para cargar, validar, limpiar, comparar y visualizar archivos CSV del DANE relacionados con trabajo infantil.
 
@@ -53,6 +53,20 @@ Aplicacion web en Next.js con JavaScript para cargar, validar, limpiar, comparar
 - Filtros funcionales en dashboard: ano, sexo, edad, trabaja, estudia y riesgo final.
 - KPI y graficas recalculadas en cliente al cambiar filtros.
 - Graficas con Apache ECharts como Client Components.
+- Comparacion anual real en `/comparacion`:
+  - usa solo datasets limpios,
+  - permite seleccionar ano base y ano comparado,
+  - usa 2024 como referencia si esta disponible,
+  - calcula diferencia absoluta y porcentual,
+  - muestra indicadores de subida, bajada o estabilidad,
+  - expone los mismos datos en `GET /api/comparisons`.
+- Exportacion implementada:
+  - descarga CSV procesado por dataset desde `/api/datasets/[datasetId]/export?format=csv`,
+  - descarga JSON procesado por dataset desde `/api/datasets/[datasetId]/export?format=json`,
+  - descarga resumen JSON por dataset desde `/api/datasets/[datasetId]/export?format=summary`,
+  - descarga resumen JSON del dashboard desde `/api/dashboard/export?format=json`,
+  - descarga tabla resumen CSV del dashboard desde `/api/dashboard/export?format=csv`,
+  - respeta filtros activos del dashboard cuando se usa desde el panel de filtros.
 
 ## Ejecutar
 
@@ -87,43 +101,30 @@ npm.cmd run build
    - Detectar separador automaticamente si llega CSV con `;`.
    - Reportar errores por fila y columna.
 
-2. Comparacion anual real
-   - Permitir seleccionar dos anos disponibles.
-   - Comparar 2024 contra otro ano por defecto.
-   - Calcular diferencia absoluta.
-   - Calcular diferencia porcentual.
-   - Mostrar flechas de incremento o disminucion por indicador.
-   - Usar solo datasets `clean`.
-
-3. Dashboard avanzado
+2. Dashboard avanzado
    - Agregar selector de vista o breadcrumbs para las dos vistas internas.
    - Agregar mas graficas por categoria si el diccionario DANE lo permite.
    - Ajustar responsivo para pantallas pequenas.
    - Agregar estados vacios cuando un filtro deje cero registros.
    - Sincronizar filtros con URL query params para compartir vistas.
 
-4. Exportacion
-   - Exportar dataset procesado a CSV.
-   - Exportar resumen de indicadores a JSON.
-   - Exportar tabla resumen del dashboard.
-
-5. Procesos
+3. Procesos
    - Agregar filtros o selector de dataset dentro de `/procesos` si la lista crece.
    - Mostrar errores de validacion en formato mas detallado por fila y columna.
 
-6. Documentacion tecnica final
+4. Documentacion tecnica final
    - Documentar reglas de negocio DANE usadas.
    - Documentar columnas mapeadas.
    - Documentar calculo de trabajo economico.
    - Documentar calculo de oficios intensivos.
    - Documentar calculo de trabajo infantil ampliado.
 
-7. Pruebas
+5. Pruebas
    - Agregar pruebas unitarias para validacion y calculo de indicadores.
    - Agregar pruebas de API para carga de CSV.
    - Agregar pruebas manuales documentadas por pagina.
 
-8. Pulido visual final
+6. Pulido visual final
    - Revisar espaciados globales.
    - Homologar textos y acentos.
    - Ajustar colores finales.

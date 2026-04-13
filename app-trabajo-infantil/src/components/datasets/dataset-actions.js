@@ -48,6 +48,14 @@ export default function DatasetActions({ dataset }) {
       >
         Ver detalle
       </Link>
+      {dataset.status === "clean" ? (
+        <a
+          href={`/api/datasets/${dataset.id}/export?format=csv`}
+          className="inline-flex rounded-full border border-line bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-accent hover:bg-slate-50"
+        >
+          Exportar CSV
+        </a>
+      ) : null}
       {canMutate ? (
         <>
           <button

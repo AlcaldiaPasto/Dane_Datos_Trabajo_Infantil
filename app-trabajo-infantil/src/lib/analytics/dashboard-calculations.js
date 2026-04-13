@@ -144,11 +144,11 @@ function toOrderedItems(counts, orderedLabels) {
 
 function buildDelta(years) {
   return years.length > 1
-    ? { direction: "up", title: "Comparacion anual disponible", message: "Hay mas de un año limpio listo para comparar." }
+    ? { direction: "up", title: "Comparacion anual disponible", message: "Hay mas de un anio limpio listo para comparar." }
     : {
         direction: "stable",
         title: "Comparacion anual no disponible",
-        message: "Solo esta disponible el dataset 2024 limpio; aun no hay otro año para comparar incremento o disminucion.",
+        message: "Solo esta disponible el dataset 2024 limpio; aun no hay otro anio para comparar incremento o disminucion.",
       };
 }
 

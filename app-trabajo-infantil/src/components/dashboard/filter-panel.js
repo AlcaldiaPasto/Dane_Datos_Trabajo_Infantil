@@ -67,6 +67,8 @@ export default function FilterPanel({
   page,
   onPageChange,
 }) {
+  const exportQuery = new URLSearchParams(filters).toString();
+
   return (
     <Card
       title="Panel de filtros"
@@ -93,6 +95,20 @@ export default function FilterPanel({
             >
               Limpiar
             </button>
+          </div>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <a
+              href={`/api/dashboard/export?format=json&${exportQuery}`}
+              className="inline-flex h-9 items-center justify-center rounded-full bg-white/10 px-3 text-xs font-bold text-white/85 transition hover:bg-white/20"
+            >
+              Resumen JSON
+            </a>
+            <a
+              href={`/api/dashboard/export?format=csv&${exportQuery}`}
+              className="inline-flex h-9 items-center justify-center rounded-full bg-white/10 px-3 text-xs font-bold text-white/85 transition hover:bg-white/20"
+            >
+              Tabla CSV
+            </a>
           </div>
         </div>
 
