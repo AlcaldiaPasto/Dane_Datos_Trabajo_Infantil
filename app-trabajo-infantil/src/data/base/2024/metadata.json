@@ -1,0 +1,19 @@
+{
+  "id": "base-2024",
+  "sourceType": "base",
+  "sessionId": "global",
+  "fileName": "dane-2024.csv",
+  "detectedYear": 2024,
+  "yearSource": "metadata",
+  "isPrimary": true,
+  "status": "clean",
+  "readyForAnalysis": true,
+  "uploadedAt": "2026-04-10T00:00:00.000Z",
+  "updatedAt": "2026-04-10T00:00:00.000Z",
+  "cleaningRulesApplied": [
+    "Registro del dataset base 2024 dentro del proyecto.",
+    "Lectura de encabezados tecnicos originales sin alterar el archivo fuente.",
+    "Preparacion del dataset para futuras validaciones y limpieza automatica."
+  ],
+  "issues": []
+}

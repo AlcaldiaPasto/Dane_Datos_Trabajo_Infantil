@@ -1,0 +1,11 @@
+﻿node_modules
+.next
+out
+coverage
+runtime/sessions/*
+!runtime/sessions/.gitkeep
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.env*
