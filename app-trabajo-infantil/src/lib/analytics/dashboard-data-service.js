@@ -14,14 +14,24 @@ function parseCsv(text) {
   );
 }
 
+async function readDatasetRows(dataset) {
+  if (dataset.cleanPath) {
+    const content = await fs.readFile(dataset.cleanPath, "utf8");
+    const cleaned = JSON.parse(content.replace(/^\uFEFF/, ""));
+    return cleaned.rows || [];
+  }
+
+  const content = await fs.readFile(dataset.rawPath, "utf8");
+  return parseCsv(content);
+}
+
 export async function buildDashboardRecords(datasets) {
   const cleanDatasets = datasets.filter((dataset) => dataset.status === "clean" && dataset.rawPath);
   const records = [];
 
   for (const dataset of cleanDatasets) {
     try {
-      const content = await fs.readFile(dataset.rawPath, "utf8");
-      const rows = parseCsv(content);
+      const rows = await readDatasetRows(dataset);
       records.push(...rows.map((row, index) => deriveDashboardRecord(row, dataset, index)));
     } catch {
       continue;

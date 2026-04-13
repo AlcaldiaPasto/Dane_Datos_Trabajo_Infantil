@@ -1,6 +1,6 @@
-﻿import Link from "next/link";
-import StatusPill from "@/components/ui/status-pill";
+﻿import StatusPill from "@/components/ui/status-pill";
 import Card from "@/components/ui/card";
+import DatasetActions from "@/components/datasets/dataset-actions";
 
 export default function DatasetTable({ datasets }) {
   return (
@@ -33,7 +33,7 @@ export default function DatasetTable({ datasets }) {
                 Fecha de carga
               </th>
               <th className="rounded-r-2xl px-5 py-4 font-mono text-[11px] uppercase tracking-[0.24em] text-muted">
-                Accion
+                Acciones
               </th>
             </tr>
           </thead>
@@ -56,12 +56,7 @@ export default function DatasetTable({ datasets }) {
                 <td className="px-5 py-5 font-mono text-sm text-foreground">{dataset.columnCount}</td>
                 <td className="px-5 py-5 text-sm text-muted">{dataset.uploadedAtLabel}</td>
                 <td className="px-5 py-5">
-                  <Link
-                    href={`/datasets/${dataset.id}`}
-                    className="inline-flex rounded-full border border-line bg-white px-4 py-2 text-sm font-semibold text-accent transition hover:border-accent hover:bg-accent-soft"
-                  >
-                    Ver detalle
-                  </Link>
+                  <DatasetActions dataset={dataset} />
                 </td>
               </tr>
             ))}

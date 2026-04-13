@@ -17,13 +17,17 @@ export default async function ProcessesPage() {
         eyebrow: "Procesamiento",
         title: "Estado del proceso",
         description: "Seguimiento de carga, validacion, limpieza y reproceso de datasets.",
-        badge: primaryProcess.status,
+        badge: primaryProcess?.status || "sin procesos",
       }}
     >
       <div className="flex min-h-full items-center justify-center">
         <div className="flex w-full max-w-[860px] flex-col gap-6">
-          <ProcessProgress process={primaryProcess} />
-          <ProcessTimeline steps={primaryProcess.steps} />
+          {processes.map((process) => (
+            <div key={process.datasetId} className="flex flex-col gap-6">
+              <ProcessProgress process={process} />
+              <ProcessTimeline steps={process.steps} />
+            </div>
+          ))}
         </div>
       </div>
     </AppShell>

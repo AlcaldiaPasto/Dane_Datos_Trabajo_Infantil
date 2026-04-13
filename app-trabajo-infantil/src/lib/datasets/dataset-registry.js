@@ -1,4 +1,6 @@
-﻿import { promises as fs } from "node:fs";
+import { promises as fs } from "node:fs";
+import Papa from "papaparse";
+import { buildPreview, cleanRows } from "@/lib/csv/cleaner";
 import { getBaseDatasetCsvPath, getBaseDatasetMetadataPath, getSessionsRoot } from "@/lib/storage/file-store";
 
 async function readJson(filePath) {
@@ -8,20 +10,24 @@ async function readJson(filePath) {
 
 async function readCsvSnapshot(filePath, limit = 5) {
   const content = await fs.readFile(filePath, "utf8");
-  const lines = content.split(/\r?\n/).filter(Boolean);
-  const headers = (lines[0] || "").split(",").map((value) => value.trim());
-  const rows = lines.slice(1, limit + 1).map((line) => {
-    const values = line.split(",");
-    return headers.reduce((accumulator, header, index) => {
-      accumulator[header] = values[index] || "";
-      return accumulator;
-    }, {});
+  const parsed = Papa.parse(content.replace(/^\uFEFF/, ""), {
+    header: true,
+    skipEmptyLines: true,
+    transformHeader: (header) => String(header || "").trim(),
   });
+  const headers = parsed.meta.fields || [];
+  const rows = parsed.data.filter((row) =>
+    Object.values(row).some((value) => String(value || "").trim() !== "")
+  );
+
   return {
     headers: headers.slice(0, 8),
-    rows: rows.map((row) => Object.fromEntries(headers.slice(0, 8).map((header) => [header, row[header] || ""]))),
+    rows: rows.slice(0, limit).map((row) =>
+      Object.fromEntries(headers.slice(0, 8).map((header) => [header, row[header] || ""]))
+    ),
     totalHeaders: headers,
-    totalRows: Math.max(lines.length - 1, 0),
+    totalRows: rows.length,
+    rawRows: rows,
   };
 }
 
@@ -29,15 +35,40 @@ async function loadBaseDataset() {
   const metadata = await readJson(getBaseDatasetMetadataPath());
   const csvPath = getBaseDatasetCsvPath();
   const snapshot = await readCsvSnapshot(csvPath);
+  const cleanResult = cleanRows(snapshot.rawRows, {
+    headers: snapshot.totalHeaders,
+    dataset: metadata,
+  });
+
   return {
     ...metadata,
     rowCount: snapshot.totalRows,
     columnCount: snapshot.totalHeaders.length,
     columns: snapshot.totalHeaders,
+    cleanedColumns: cleanResult.headers,
     previewBefore: { headers: snapshot.headers, rows: snapshot.rows },
-    previewAfter: { headers: snapshot.headers, rows: snapshot.rows },
+    previewAfter: cleanResult.preview,
+    cleaningRulesApplied: [...(metadata.cleaningRulesApplied || []), ...cleanResult.rules],
     rawPath: csvPath,
+    cleanPath: null,
   };
+}
+
+async function hydrateSessionDataset(metadata) {
+  if (!metadata.cleanPath) return metadata;
+
+  try {
+    const cleanContent = await fs.readFile(metadata.cleanPath, "utf8");
+    const cleanDataset = JSON.parse(cleanContent.replace(/^\uFEFF/, ""));
+
+    return {
+      ...metadata,
+      cleanedColumns: cleanDataset.columns || metadata.cleanedColumns || [],
+      previewAfter: metadata.previewAfter || buildPreview(cleanDataset.columns || [], cleanDataset.rows || []),
+    };
+  } catch {
+    return metadata;
+  }
 }
 
 async function loadSessionDatasets() {
@@ -54,7 +85,7 @@ async function loadSessionDatasets() {
         const metadataPath = `${sessionPath}/${childFolder.name}/metadata.json`;
         try {
           const metadata = await readJson(metadataPath);
-          datasets.push(metadata);
+          datasets.push(await hydrateSessionDataset(metadata));
         } catch {
           continue;
         }
