@@ -12,7 +12,7 @@ export default function DatasetUploadForm() {
       <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
         <div className="max-w-2xl">
           <p className="text-sm leading-7 text-muted">
-            Usa la pagina de carga para seleccionar el archivo, revisar nombre, tamaño, año detectado
+            Usa la pagina de carga para seleccionar el archivo, revisar nombre, tamano, anio detectado
             y ejecutar la validacion inicial antes de abrir el detalle.
           </p>
         </div>

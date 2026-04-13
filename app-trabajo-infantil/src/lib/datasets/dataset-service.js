@@ -1,4 +1,4 @@
-﻿import { promises as fs } from "node:fs";
+import { promises as fs } from "node:fs";
 import path from "node:path";
 import { PRIMARY_YEAR } from "@/lib/constants/year-rules";
 import { processCsvText } from "@/lib/datasets/dataset-ingestion-service";

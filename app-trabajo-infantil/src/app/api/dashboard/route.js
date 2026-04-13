@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { buildDashboardSnapshot } from "@/lib/analytics/kpi-service";
 import { listDatasets } from "@/lib/datasets/dataset-service";
 

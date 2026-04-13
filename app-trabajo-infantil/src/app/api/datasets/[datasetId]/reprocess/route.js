@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { reprocessDatasetById } from "@/lib/datasets/dataset-service";
 
 export const runtime = "nodejs";

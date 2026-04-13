@@ -1,18 +1,6 @@
 import { promises as fs } from "node:fs";
-import Papa from "papaparse";
 import { deriveDashboardRecord } from "@/lib/analytics/dashboard-calculations";
-
-function parseCsv(text) {
-  const parsed = Papa.parse(String(text || "").replace(/^\uFEFF/, ""), {
-    header: true,
-    skipEmptyLines: true,
-    transformHeader: (header) => String(header || "").trim(),
-  });
-
-  return parsed.data.filter((row) =>
-    Object.values(row).some((value) => String(value || "").trim() !== "")
-  );
-}
+import { parseCsvText } from "@/lib/csv/parser";
 
 async function readDatasetRows(dataset) {
   if (dataset.cleanPath) {
@@ -22,7 +10,7 @@ async function readDatasetRows(dataset) {
   }
 
   const content = await fs.readFile(dataset.rawPath, "utf8");
-  return parseCsv(content);
+  return parseCsvText(content).rows;
 }
 
 export async function buildDashboardRecords(datasets) {

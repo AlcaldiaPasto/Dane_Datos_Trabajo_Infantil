@@ -1,4 +1,4 @@
-﻿import AppShell from "@/components/layout/app-shell";
+import AppShell from "@/components/layout/app-shell";
 import DatasetTable from "@/components/datasets/dataset-table";
 import DatasetUploadForm from "@/components/datasets/dataset-upload-form";
 import DatasetStatusList from "@/components/datasets/dataset-status-list";

@@ -7,9 +7,9 @@ const toneClasses = {
 };
 
 const arrowByDirection = {
-  up: "↑",
-  down: "↓",
-  stable: "→",
+  up: "+",
+  down: "-",
+  stable: "=",
 };
 
 export default function ComparisonBanner({ comparison }) {
@@ -22,7 +22,7 @@ export default function ComparisonBanner({ comparison }) {
     >
       <div className="flex items-start gap-4">
         <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/80 text-2xl text-foreground shadow-sm">
-          {arrowByDirection[comparison.direction] || "→"}
+          {arrowByDirection[comparison.direction] || "="}
         </div>
         <div className="space-y-2">
           <p className="text-lg font-semibold text-foreground">{comparison.title}</p>

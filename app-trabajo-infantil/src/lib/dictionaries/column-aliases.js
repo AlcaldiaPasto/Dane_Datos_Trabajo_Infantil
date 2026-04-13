@@ -1,4 +1,4 @@
-﻿export const COLUMN_ALIASES = {
+export const COLUMN_ALIASES = {
   sex: ["sexo", "genero", "p6020", "p3271"],
   age: ["edad", "anos", "p6040"],
   studies: ["estudia", "p6160"],

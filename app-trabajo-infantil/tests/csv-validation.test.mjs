@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { detectCsvDelimiter, parseCsvText } from "../src/lib/csv/parser.js";
 import { validateDatasetStructure } from "../src/lib/csv/validator.js";
 
@@ -27,4 +28,16 @@ test("reporta advertencias de rangos y catalogos sin bloquear estructura valida"
   assert.equal(validation.rowIssues.length, 2);
   assert.match(validation.warnings.join(" "), /P6040/);
   assert.match(validation.warnings.join(" "), /P3271/);
+});
+
+test("valida el dataset base 2024 sin advertencias falsas", () => {
+  const csv = readFileSync("./src/data/base/2024/raw/dane-2024.csv", "utf8");
+  const parsed = parseCsvText(csv);
+  const validation = validateDatasetStructure(parsed.headers, parsed.rows);
+
+  assert.equal(parsed.delimiter, ",");
+  assert.equal(parsed.rows.length, 860);
+  assert.equal(parsed.headers.length, 132);
+  assert.equal(validation.isValid, true);
+  assert.equal(validation.warnings.length, 0);
 });

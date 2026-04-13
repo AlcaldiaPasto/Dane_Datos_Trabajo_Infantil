@@ -1,4 +1,4 @@
-﻿import { UNKNOWN_YEAR_LABEL } from "@/lib/constants/year-rules";
+import { UNKNOWN_YEAR_LABEL } from "@/lib/constants/year-rules";
 import { formatDateTime } from "@/lib/utils/dates";
 
 export function serializeDataset(dataset) {

@@ -1,4 +1,4 @@
-﻿export default function Badge({ children, tone = "neutral" }) {
+export default function Badge({ children, tone = "neutral" }) {
   const tones = {
     neutral: "bg-slate-100 text-slate-700",
     accent: "bg-accent-soft text-accent",

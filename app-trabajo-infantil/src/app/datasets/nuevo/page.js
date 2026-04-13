@@ -1,4 +1,4 @@
-﻿import AppShell from "@/components/layout/app-shell";
+import AppShell from "@/components/layout/app-shell";
 import CsvUploadPanel from "@/components/datasets/csv-upload-panel";
 
 export const dynamic = "force-dynamic";

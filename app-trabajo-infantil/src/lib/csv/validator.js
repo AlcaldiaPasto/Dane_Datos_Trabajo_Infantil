@@ -6,7 +6,7 @@ const NUMERIC_RULES = [
   { column: "P3271", label: "sexo", allowed: ["1", "2"] },
   { column: "P6160", label: "asistencia escolar", allowed: ["1", "2", "9"] },
   { column: "P6170", label: "estudia actualmente", allowed: ["1", "2", "9"] },
-  { column: "P400", label: "trabajo economico P400", allowed: ["1", "2", "3", "9"] },
+  { column: "P400", label: "actividad principal P400", allowed: ["1", "2", "3", "4", "5", "6", "9"] },
   { column: "P401", label: "trabajo economico P401", allowed: ["1", "2", "3", "9"] },
   { column: "P402", label: "trabajo economico P402", allowed: ["1", "2", "3", "9"] },
   { column: "P403", label: "trabajo economico P403", allowed: ["1", "2", "3", "9"] },

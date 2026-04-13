@@ -1,4 +1,4 @@
-﻿import { IBM_Plex_Mono, Manrope } from "next/font/google";
+import { IBM_Plex_Mono, Manrope } from "next/font/google";
 import "./globals.css";
 
 const manrope = Manrope({

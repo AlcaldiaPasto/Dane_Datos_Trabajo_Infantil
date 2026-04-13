@@ -1,4 +1,4 @@
-﻿import AppShell from "@/components/layout/app-shell";
+import AppShell from "@/components/layout/app-shell";
 import ProcessProgress from "@/components/process/process-progress";
 import ProcessTimeline from "@/components/process/process-timeline";
 import { getCurrentProcesses } from "@/lib/processes/process-manager";
