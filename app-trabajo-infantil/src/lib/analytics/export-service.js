@@ -7,25 +7,11 @@ import {
   getDefaultFilters,
 } from "@/lib/analytics/dashboard-calculations";
 import { cleanRows } from "@/lib/csv/cleaner";
+import { parseCsvText } from "@/lib/csv/parser";
 import { getRegisteredDatasetById } from "@/lib/datasets/dataset-registry";
 import { listDatasets } from "@/lib/datasets/dataset-service";
 
 const DASHBOARD_FILTER_KEYS = ["year", "sex", "age", "works", "studies", "riskFinal"];
-
-function parseCsv(text) {
-  const parsed = Papa.parse(String(text || "").replace(/^\uFEFF/, ""), {
-    header: true,
-    skipEmptyLines: true,
-    transformHeader: (header) => String(header || "").trim(),
-  });
-
-  const headers = parsed.meta.fields || [];
-  const rows = parsed.data.filter((row) =>
-    Object.values(row).some((value) => String(value || "").trim() !== "")
-  );
-
-  return { headers, rows };
-}
 
 function toCsv(columns, rows) {
   return Papa.unparse({
@@ -101,7 +87,7 @@ export async function buildProcessedDatasetExport(datasetId) {
   }
 
   const rawContent = await fs.readFile(dataset.rawPath, "utf8");
-  const parsed = parseCsv(rawContent);
+  const parsed = parseCsvText(rawContent);
   const cleaned = cleanRows(parsed.rows, {
     headers: parsed.headers,
     dataset,

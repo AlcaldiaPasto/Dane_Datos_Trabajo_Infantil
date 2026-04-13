@@ -67,6 +67,12 @@ Aplicacion web en Next.js con JavaScript para cargar, validar, limpiar, comparar
   - descarga resumen JSON del dashboard desde `/api/dashboard/export?format=json`,
   - descarga tabla resumen CSV del dashboard desde `/api/dashboard/export?format=csv`,
   - respeta filtros activos del dashboard cuando se usa desde el panel de filtros.
+- Validacion CSV avanzada:
+  - detecta separador automaticamente,
+  - reporta columnas sugeridas ausentes,
+  - reporta encabezados duplicados,
+  - valida rangos y catalogos esperados sin bloquear la carga si la estructura tecnica minima existe.
+- Pruebas basicas con `node --test` para parser y validador CSV.
 
 ## Ejecutar
 
@@ -90,42 +96,27 @@ Comandos usados para validar:
 ```powershell
 npm.cmd run lint
 npm.cmd run build
+npm.cmd test
 ```
 
-## Pendientes completos
+## Estado de cierre
 
-1. Validacion CSV avanzada
-   - Ampliar columnas obligatorias mas alla de `DIRECTORIO` y `ORDEN`.
-   - Validar tipos numericos por columna.
-   - Validar rangos esperados de codigos DANE.
-   - Detectar separador automaticamente si llega CSV con `;`.
-   - Reportar errores por fila y columna.
+La aplicacion queda funcional para la etapa solicitada: carga, validacion, limpieza, listado, detalle, dashboard, filtros, comparacion anual, procesos, resumenes y exportacion sin Power BI, sin TypeScript, sin Python y sin base de datos persistente.
 
-2. Dashboard avanzado
-   - Agregar selector de vista o breadcrumbs para las dos vistas internas.
+## Mejoras futuras opcionales
+
+1. Dashboard avanzado
    - Agregar mas graficas por categoria si el diccionario DANE lo permite.
-   - Ajustar responsivo para pantallas pequenas.
-   - Agregar estados vacios cuando un filtro deje cero registros.
    - Sincronizar filtros con URL query params para compartir vistas.
 
-3. Procesos
+2. Procesos
    - Agregar filtros o selector de dataset dentro de `/procesos` si la lista crece.
-   - Mostrar errores de validacion en formato mas detallado por fila y columna.
+   - Agregar agrupacion por fecha cuando existan muchas cargas.
 
-4. Documentacion tecnica final
-   - Documentar reglas de negocio DANE usadas.
-   - Documentar columnas mapeadas.
-   - Documentar calculo de trabajo economico.
-   - Documentar calculo de oficios intensivos.
-   - Documentar calculo de trabajo infantil ampliado.
-
-5. Pruebas
-   - Agregar pruebas unitarias para validacion y calculo de indicadores.
+3. Pruebas
    - Agregar pruebas de API para carga de CSV.
-   - Agregar pruebas manuales documentadas por pagina.
+   - Agregar pruebas end-to-end de navegacion.
 
-6. Pulido visual final
-   - Revisar espaciados globales.
-   - Homologar textos y acentos.
-   - Ajustar colores finales.
-   - Revisar accesibilidad basica en controles de filtros y botones.
+4. Pulido visual final
+   - Afinar paleta final si se define una guia de marca institucional.
+   - Agregar version responsive dedicada para celulares si se vuelve prioridad.

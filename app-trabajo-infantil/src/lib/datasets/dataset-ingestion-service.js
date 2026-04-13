@@ -1,9 +1,9 @@
-﻿import { createHash, randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import Papa from "papaparse";
 import { DATASET_STATUS } from "@/lib/constants/dataset-status";
 import { cleanRows } from "@/lib/csv/cleaner";
+import { parseCsvText } from "@/lib/csv/parser";
 import { validateDatasetStructure } from "@/lib/csv/validator";
 import { detectYearFromFileName, detectYearFromRows } from "@/lib/csv/year-detector";
 import { listRegisteredDatasets } from "@/lib/datasets/dataset-registry";
@@ -28,25 +28,6 @@ function buildRawPreview(headers, rows, limit = 8) {
   };
 }
 
-function parseCsv(csvText) {
-  const parsed = Papa.parse(csvText, {
-    header: true,
-    skipEmptyLines: true,
-    transformHeader: (header) => String(header || "").trim(),
-  });
-
-  const headers = parsed.meta.fields || [];
-  const rows = parsed.data.filter((row) =>
-    Object.values(row).some((value) => String(value || "").trim() !== "")
-  );
-
-  return {
-    headers,
-    rows,
-    errors: parsed.errors || [],
-  };
-}
-
 function buildProcessLog({ now, parsed, validation, detectedYear, status, duplicateOf }) {
   const log = [
     {
@@ -57,7 +38,7 @@ function buildProcessLog({ now, parsed, validation, detectedYear, status, duplic
     },
     {
       label: "Lectura CSV",
-      note: `Se detectaron ${parsed.rows.length} filas y ${parsed.headers.length} columnas.`,
+      note: `Se detectaron ${parsed.rows.length} filas, ${parsed.headers.length} columnas y separador '${parsed.delimiter || ","}'.`,
       status: parsed.errors.length ? "warning" : "complete",
       createdAt: now,
     },
@@ -67,6 +48,14 @@ function buildProcessLog({ now, parsed, validation, detectedYear, status, duplic
         ? "La estructura minima requerida esta presente."
         : `Faltan columnas obligatorias: ${validation.missingColumns.join(", ")}.`,
       status: validation.isValid ? "complete" : "error",
+      createdAt: now,
+    },
+    {
+      label: "Validacion avanzada",
+      note: validation.warnings.length
+        ? `Se registraron ${validation.warnings.length} advertencias de columnas, codigos o rangos.`
+        : "No se registraron advertencias avanzadas en las columnas evaluadas.",
+      status: validation.warnings.length ? "warning" : "complete",
       createdAt: now,
     },
     {
@@ -109,8 +98,8 @@ export async function processCsvText({
   existingMetadata = {},
   contentHash,
 }) {
-  const parsed = parseCsv(csvText);
-  const validation = validateDatasetStructure(parsed.headers);
+  const parsed = parseCsvText(csvText);
+  const validation = validateDatasetStructure(parsed.headers, parsed.rows);
   const yearFromRows = detectYearFromRows(parsed.headers, parsed.rows);
   const detectedYear = yearFromRows || detectYearFromFileName(originalFileName);
   const yearSource = yearFromRows ? "column" : detectedYear ? "filename" : "unknown";
@@ -122,6 +111,7 @@ export async function processCsvText({
   const issues = [
     ...parsed.errors.slice(0, 10).map((error) => `CSV: ${error.message}`),
     ...validation.missingColumns.map((column) => `Falta columna obligatoria: ${column}`),
+    ...validation.warnings.slice(0, 50),
     ...(detectedYear ? [] : ["No se pudo detectar el anio desde columna ni nombre de archivo."]),
   ];
   const status = validation.isValid ? DATASET_STATUS.CLEAN : DATASET_STATUS.ERROR;
@@ -184,6 +174,8 @@ export async function processCsvText({
       "Archivo original guardado sin alteraciones en almacenamiento temporal de sesion.",
       "Encabezados leidos y normalizados para validacion inicial.",
       "Validacion estructural contra columnas obligatorias minimas.",
+      "Validacion avanzada de columnas sugeridas, duplicados, catalogos y rangos esperados.",
+      `Separador CSV detectado automaticamente: ${parsed.delimiter || ","}.`,
       "Deteccion de anio por columna o nombre de archivo.",
       ...(cleanResult?.rules || []),
     ],
@@ -235,7 +227,7 @@ export async function ingestCsvFile(file) {
       processLog: buildProcessLog({
         now,
         parsed: { rows: [], headers: [], errors: [] },
-        validation: { isValid: false, missingColumns: [] },
+        validation: { isValid: false, missingColumns: [], warnings: [] },
         detectedYear: duplicate.detectedYear,
         status: DATASET_STATUS.ERROR,
         duplicateOf: duplicate.id,

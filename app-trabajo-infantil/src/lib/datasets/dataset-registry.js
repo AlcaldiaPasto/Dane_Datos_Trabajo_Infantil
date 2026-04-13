@@ -1,6 +1,6 @@
 import { promises as fs } from "node:fs";
-import Papa from "papaparse";
 import { buildPreview, cleanRows } from "@/lib/csv/cleaner";
+import { parseCsvText } from "@/lib/csv/parser";
 import { getBaseDatasetCsvPath, getBaseDatasetMetadataPath, getSessionsRoot } from "@/lib/storage/file-store";
 
 async function readJson(filePath) {
@@ -10,15 +10,9 @@ async function readJson(filePath) {
 
 async function readCsvSnapshot(filePath, limit = 5) {
   const content = await fs.readFile(filePath, "utf8");
-  const parsed = Papa.parse(content.replace(/^\uFEFF/, ""), {
-    header: true,
-    skipEmptyLines: true,
-    transformHeader: (header) => String(header || "").trim(),
-  });
-  const headers = parsed.meta.fields || [];
-  const rows = parsed.data.filter((row) =>
-    Object.values(row).some((value) => String(value || "").trim() !== "")
-  );
+  const parsed = parseCsvText(content);
+  const headers = parsed.headers;
+  const rows = parsed.rows;
 
   return {
     headers: headers.slice(0, 8),
