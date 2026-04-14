@@ -88,14 +88,14 @@ export default function CsvUploadPanel() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-[860px] flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-[900px] min-w-0 flex-col gap-5 sm:gap-6">
       <Card
         title="Ingresar nuevo CSV o ZIP"
         subtitle="Sube un archivo del DANE para validarlo, extraerlo si viene en ZIP, filtrar Pasto y dejarlo disponible en datasets."
         interactive
       >
         <form onSubmit={handleSubmit} className="space-y-5">
-          <label className="block rounded-[28px] border-2 border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center transition hover:border-accent hover:bg-accent-soft/40">
+          <label className="block rounded-[28px] border-2 border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center transition hover:border-accent hover:bg-accent-soft/40 sm:px-6 sm:py-10">
             <input
               type="file"
               accept=".csv,.zip,text/csv,application/zip,application/x-zip-compressed"
@@ -113,7 +113,7 @@ export default function CsvUploadPanel() {
           </label>
 
           <div className="rounded-[24px] border border-line bg-white px-5 py-5">
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="font-mono text-[11px] uppercase tracking-[0.26em] text-muted">
                   Validacion inicial
@@ -181,9 +181,9 @@ export default function CsvUploadPanel() {
         {result?.dataset ? (
           <Card title="Resultado del procesamiento" subtitle="El dataset ya quedo registrado en la sesion y aparecera en el listado.">
             <div className="space-y-4">
-              <div className="flex items-center justify-between rounded-[24px] border border-line bg-surface px-5 py-4">
-                <div>
-                  <p className="text-sm font-semibold text-foreground">{result.dataset.fileName}</p>
+              <div className="flex flex-col gap-4 rounded-[24px] border border-line bg-surface px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="break-all text-sm font-semibold text-foreground">{result.dataset.fileName}</p>
                   <p className="mt-1 text-sm text-muted">
                     Estado: {result.dataset.status} - Ano: {result.dataset.detectedYear || "Pendiente"} - Filas Pasto: {result.dataset.rowCount}
                   </p>
@@ -203,7 +203,7 @@ export default function CsvUploadPanel() {
                   Archivo recibido. El procesamiento continua en segundo plano y puedes seguir navegando.
                 </p>
               )}
-              <div className="flex gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <button
                   type="button"
                   onClick={() => router.push("/datasets")}

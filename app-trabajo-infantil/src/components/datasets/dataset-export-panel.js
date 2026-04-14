@@ -14,7 +14,7 @@ export default function DatasetExportPanel({ dataset }) {
       className="bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)]"
     >
       {canExport ? (
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <a href={`/api/datasets/${dataset.id}/export?format=csv`} className={buttonClass}>
             CSV procesado
           </a>

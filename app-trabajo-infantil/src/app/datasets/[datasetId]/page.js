@@ -25,19 +25,19 @@ export default async function DatasetDetailPage({ params }) {
         badge: dataset.status,
       }}
     >
-      <div className="flex min-h-full flex-col">
+      <div className="flex min-h-full min-w-0 flex-col">
         <div className="mb-6">
           <DatasetExportPanel dataset={dataset} />
         </div>
-        <div className="grid items-stretch gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+        <div className="grid min-w-0 items-stretch gap-5 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
           <DatasetColumnsTable columns={dataset.columns.slice(0, 24)} />
           <CleaningRulesList rules={dataset.cleaningRulesApplied} />
         </div>
-        <div className="mt-6 grid items-stretch gap-6 xl:grid-cols-2">
+        <div className="mt-5 grid min-w-0 items-stretch gap-5 xl:grid-cols-2">
           <DatasetPreviewTable title="Preview original" preview={dataset.previewBefore} />
           <DatasetPreviewTable title="Preview base del sistema" preview={dataset.previewAfter} />
         </div>
-        <div className="mt-6">
+        <div className="mt-5 min-w-0">
           <IssueList issues={dataset.issues} />
         </div>
       </div>

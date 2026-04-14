@@ -41,17 +41,17 @@ export default function DatasetActions({ dataset }) {
   }
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex min-w-0 flex-wrap gap-2">
       <Link
         href={`/datasets/${dataset.id}`}
-        className="inline-flex rounded-full border border-line bg-white px-4 py-2 text-sm font-semibold text-accent transition hover:border-accent hover:bg-accent-soft"
+        className="inline-flex items-center justify-center rounded-full border border-line bg-white px-4 py-2 text-sm font-semibold text-accent transition hover:border-accent hover:bg-accent-soft"
       >
         Ver detalle
       </Link>
       {dataset.status === "clean" ? (
         <a
           href={`/api/datasets/${dataset.id}/export?format=csv`}
-          className="inline-flex rounded-full border border-line bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-accent hover:bg-slate-50"
+          className="inline-flex items-center justify-center rounded-full border border-line bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-accent hover:bg-slate-50"
         >
           Exportar CSV
         </a>
@@ -62,7 +62,7 @@ export default function DatasetActions({ dataset }) {
             type="button"
             onClick={reprocessDataset}
             disabled={isBusy}
-            className="inline-flex rounded-full border border-line bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-accent hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center justify-center rounded-full border border-line bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-accent hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
           >
             Reprocesar
           </button>
@@ -70,7 +70,7 @@ export default function DatasetActions({ dataset }) {
             type="button"
             onClick={deleteDataset}
             disabled={isBusy}
-            className="inline-flex rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center justify-center rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
           >
             Eliminar
           </button>

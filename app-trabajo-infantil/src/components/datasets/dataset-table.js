@@ -8,10 +8,10 @@ export default function DatasetTable({ datasets }) {
       title="Panel de datasets"
       subtitle="Listado administrativo de datasets disponibles en la sesion. El dataset 2024 se mantiene como base principal."
       interactive
-      className="h-full"
+      className="h-full min-w-0"
     >
-      <div className="h-full overflow-auto">
-        <table className="min-w-full border-collapse">
+      <div className="h-full min-w-0 overflow-x-auto overflow-y-auto">
+        <table className="min-w-[900px] border-collapse lg:min-w-full">
           <thead>
             <tr className="border-b border-line bg-slate-50 text-left">
               <th className="rounded-l-2xl px-5 py-4 font-mono text-[11px] uppercase tracking-[0.24em] text-muted">
@@ -42,7 +42,7 @@ export default function DatasetTable({ datasets }) {
               <tr key={dataset.id} className="border-b border-line transition hover:bg-slate-50/80">
                 <td className="px-5 py-5">
                   <div className="flex flex-col">
-                    <span className="text-sm font-semibold text-foreground">{dataset.fileName}</span>
+                    <span className="break-all text-sm font-semibold text-foreground">{dataset.fileName}</span>
                     <span className="mt-1 text-xs text-muted">
                       {dataset.isPrimary ? "Dataset principal por defecto" : "Dataset cargado en sesion"}
                     </span>

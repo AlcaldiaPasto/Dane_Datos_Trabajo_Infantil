@@ -23,10 +23,10 @@ export default async function DatasetsPage() {
         actionHref: "/datasets/nuevo",
       }}
     >
-      <div className="flex min-h-full flex-col gap-6">
+      <div className="flex min-h-full min-w-0 flex-col gap-5 sm:gap-6">
         <DatasetStatusList statusSummary={statusSummary} />
         <DatasetUploadForm />
-        <div className="min-h-0 flex-1">
+        <div className="min-h-0 min-w-0 flex-1">
           <DatasetTable datasets={datasets} />
         </div>
       </div>

@@ -20,7 +20,7 @@ const directionIcons = {
 
 export default function ComparisonKpis({ items, baseYear, targetYear }) {
   return (
-    <div className="grid items-stretch gap-4 xl:grid-cols-4">
+    <div className="grid min-w-0 items-stretch gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {items.map((item) => (
         <Card key={item.label} className="bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)]">
           <div className="flex h-full flex-col justify-between gap-4">

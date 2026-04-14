@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 function ComparisonControls({ years, baseYear, targetYear }) {
   return (
     <Card title="Seleccionar comparacion" subtitle="Puedes comparar 2024 contra otro ano limpio o elegir dos anos disponibles.">
-      <form className="grid gap-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
+      <form className="grid min-w-0 gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] xl:items-end">
         <label className="block">
           <span className="font-mono text-[11px] uppercase tracking-[0.24em] text-muted">Ano base</span>
           <select
@@ -39,7 +39,7 @@ function ComparisonControls({ years, baseYear, targetYear }) {
         </label>
         <button
           type="submit"
-          className="rounded-2xl bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
+          className="rounded-2xl bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800 md:col-span-2 xl:col-span-1"
         >
           Comparar
         </button>
@@ -69,7 +69,7 @@ export default async function ComparisonPage({ searchParams }) {
       }}
     >
       {snapshot.isReady ? (
-        <div className="flex min-h-full flex-col space-y-6">
+        <div className="flex min-h-full min-w-0 flex-col gap-5 sm:gap-6">
           <ComparisonControls years={snapshot.availableYears} baseYear={snapshot.baseYear} targetYear={snapshot.targetYear} />
           <ComparisonKpis items={snapshot.metrics} baseYear={snapshot.baseYear} targetYear={snapshot.targetYear} />
           <ComparisonChart snapshot={snapshot} />

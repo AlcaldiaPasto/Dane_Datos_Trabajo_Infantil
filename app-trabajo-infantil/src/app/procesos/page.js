@@ -20,8 +20,8 @@ export default async function ProcessesPage() {
         badge: primaryProcess?.status || "sin procesos",
       }}
     >
-      <div className="flex min-h-full items-center justify-center">
-        <div className="flex w-full max-w-[860px] flex-col gap-6">
+      <div className="flex min-h-full min-w-0 items-start justify-center py-2 sm:py-4 lg:items-center">
+        <div className="flex w-full max-w-[900px] min-w-0 flex-col gap-5 sm:gap-6">
           {processes.map((process) => (
             <div key={process.datasetId} className="flex flex-col gap-6">
               <ProcessProgress process={process} />

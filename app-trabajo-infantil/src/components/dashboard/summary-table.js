@@ -8,8 +8,8 @@ export default function SummaryTable({ rows }) {
       interactive
       className="p-4"
     >
-      <div className="overflow-hidden rounded-[24px] border border-line">
-        <table className="min-w-full border-collapse bg-white">
+      <div className="overflow-x-auto rounded-[24px] border border-line">
+        <table className="min-w-[720px] border-collapse bg-white lg:min-w-full">
           <thead>
             <tr className="bg-slate-50">
               <th className="px-4 py-3 text-left font-mono text-[11px] uppercase tracking-[0.26em] text-muted">
