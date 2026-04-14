@@ -1,7 +1,8 @@
 import { promises as fs } from "node:fs";
-import { buildPreview, cleanRows } from "@/lib/csv/cleaner";
+import { cleanRows } from "@/lib/csv/cleaner";
 import { buildPastoFilterRule, filterRowsForPasto } from "@/lib/csv/pasto-filter";
 import { parseCsvText } from "@/lib/csv/parser";
+import { scheduleDashboardCacheBuild } from "@/lib/datasets/dashboard-cache-scheduler";
 import { getBaseDatasetCsvPath, getBaseDatasetMetadataPath, getSessionsRoot } from "@/lib/storage/file-store";
 
 async function readJson(filePath) {
@@ -58,28 +59,6 @@ async function loadBaseDataset() {
   };
 }
 
-async function hydrateSessionDataset(metadata) {
-  if (!metadata.cleanPath) return metadata;
-
-  try {
-    const cleanContent = await fs.readFile(metadata.cleanPath, "utf8");
-    const cleanDataset = JSON.parse(cleanContent.replace(/^\uFEFF/, ""));
-    const columns = cleanDataset.columns || metadata.cleanedColumns || [];
-    const filterResult = filterRowsForPasto(cleanDataset.rows || [], columns);
-
-    return {
-      ...metadata,
-      rowCount: filterResult.rows.length,
-      sourceRowCount: metadata.sourceRowCount || cleanDataset.rowCount || filterResult.summary.sourceRows,
-      cleanedColumns: columns,
-      pastoFilter: filterResult.summary,
-      previewAfter: buildPreview(columns, filterResult.rows),
-    };
-  } catch {
-    return metadata;
-  }
-}
-
 async function loadSessionDatasets() {
   const sessionsRoot = getSessionsRoot();
   try {
@@ -94,7 +73,8 @@ async function loadSessionDatasets() {
         const metadataPath = `${sessionPath}/${childFolder.name}/metadata.json`;
         try {
           const metadata = await readJson(metadataPath);
-          datasets.push(await hydrateSessionDataset(metadata));
+          scheduleDashboardCacheBuild(metadata);
+          datasets.push(metadata);
         } catch {
           continue;
         }

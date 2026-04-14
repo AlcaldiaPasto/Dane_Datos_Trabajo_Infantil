@@ -1,5 +1,6 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { deriveDashboardRecord } from "../analytics/dashboard-calculations.js";
 import { DATASET_STATUS } from "../constants/dataset-status.js";
 import { cleanRows } from "../csv/cleaner.js";
 import { buildPastoFilterRule, filterRowsForPasto } from "../csv/pasto-filter.js";
@@ -133,6 +134,7 @@ export async function processCsvText({
   const safeFileName = sanitizeFileName(originalFileName);
   const rawPath = path.join(datasetDir, "raw.csv");
   const cleanPath = path.join(datasetDir, "cleaned.json");
+  const dashboardRecordsPath = path.join(datasetDir, "dashboard-records.json");
   const metadataPath = path.join(datasetDir, "metadata.json");
   const issues = [
     ...parsed.errors.slice(0, 10).map((error) => `CSV: ${error.message}`),
@@ -152,6 +154,7 @@ export async function processCsvText({
     : null;
 
   if (cleanResult) {
+    const dashboardRecords = cleanResult.rows.map((row, index) => deriveDashboardRecord(row, datasetContext, index));
     await fs.writeFile(
       cleanPath,
       JSON.stringify(
@@ -174,8 +177,24 @@ export async function processCsvText({
       ),
       "utf8"
     );
+    await fs.writeFile(
+      dashboardRecordsPath,
+      JSON.stringify(
+        {
+          datasetId,
+          detectedYear,
+          rowCount: dashboardRecords.length,
+          records: dashboardRecords,
+          generatedAt: now,
+        },
+        null,
+        2
+      ),
+      "utf8"
+    );
   } else {
     await fs.rm(cleanPath, { force: true });
+    await fs.rm(dashboardRecordsPath, { force: true });
   }
 
   const metadata = {
@@ -198,6 +217,7 @@ export async function processCsvText({
     updatedAt: now,
     rawPath,
     cleanPath: cleanResult ? cleanPath : null,
+    dashboardRecordsPath: cleanResult ? dashboardRecordsPath : null,
     contentHash: contentHash || existingMetadata.contentHash || null,
     columns: parsed.headers,
     cleanedColumns: cleanResult?.headers || [],
