@@ -13,11 +13,11 @@ export default function AppShell({
     description,
   };
   const shellClass = fixedViewport
-    ? "flex h-dvh overflow-hidden bg-background text-foreground"
-    : "flex min-h-screen overflow-x-hidden bg-background text-foreground";
+    ? "flex min-h-dvh flex-col overflow-x-hidden bg-background text-foreground lg:h-dvh lg:flex-row lg:overflow-hidden"
+    : "flex min-h-dvh flex-col overflow-x-hidden bg-background text-foreground lg:flex-row";
   const contentClass = fixedViewport
-    ? "flex h-dvh min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden px-5 py-5 xl:px-6"
-    : "flex min-h-screen min-w-0 flex-1 flex-col px-5 py-5 xl:px-6";
+    ? "flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden px-4 py-4 sm:px-5 lg:h-dvh lg:overflow-y-auto xl:px-6"
+    : "flex min-h-0 min-w-0 flex-1 flex-col px-4 py-4 sm:px-5 xl:px-6";
   const mainClass = fixedViewport
     ? "flex min-h-full min-w-0 flex-1"
     : "flex min-w-0 flex-1";

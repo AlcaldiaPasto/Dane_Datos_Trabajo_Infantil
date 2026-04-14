@@ -17,7 +17,7 @@ export default function KpiCard({ label, value, note, delta, index = 0, compact 
     >
       <div className="flex h-full flex-col justify-between">
         <div>
-          <p className={`${compact ? "text-2xl" : "text-3xl"} font-semibold tracking-tight`}>{value}</p>
+          <p className={`${compact ? "text-2xl xl:text-[1.65rem]" : "text-3xl"} font-semibold tracking-tight`}>{value}</p>
           <h3 className={`${compact ? "mt-1 text-sm" : "mt-2 text-base"} font-bold leading-tight`}>{label}</h3>
           <p className={`${compact ? "mt-1 line-clamp-1" : "mt-2"} text-xs leading-5 text-slate-700`}>{note}</p>
         </div>

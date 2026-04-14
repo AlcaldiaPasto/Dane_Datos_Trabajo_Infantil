@@ -15,7 +15,7 @@ import {
 
 function KpiGrid({ kpis }) {
   return (
-    <section className="grid min-w-0 gap-4 md:grid-cols-2 2xl:grid-cols-4">
+    <section className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {kpis.map((kpi, index) => (
         <KpiCard key={kpi.label} index={index} compact {...kpi} />
       ))}
@@ -34,7 +34,7 @@ function DashboardAnalyticsFrame({
   children,
 }) {
   return (
-    <section className="mt-4 grid min-w-0 items-start gap-5 xl:grid-cols-[minmax(340px,0.78fr)_minmax(0,1.22fr)]">
+    <section className="mt-4 grid min-w-0 items-start gap-5 xl:grid-cols-[minmax(320px,0.78fr)_minmax(0,1.22fr)] 2xl:grid-cols-[minmax(360px,0.72fr)_minmax(0,1.28fr)]">
       <FilterPanel
         filters={filters}
         options={filterOptions}
@@ -73,7 +73,7 @@ function PrimaryDashboardView({ snapshot }) {
 function DetailDashboardView({ snapshot }) {
   return (
     <>
-      <div className="grid min-w-0 items-stretch gap-6 2xl:grid-cols-2">
+      <div className="grid min-w-0 items-stretch gap-5 xl:grid-cols-2">
         <LineChart
           title="Distribucion por edad"
           subtitle="Cantidad de menores por edad dentro del filtro activo."

@@ -29,7 +29,7 @@ function isItemActive(item, pathname) {
 
 function getItemClass(isActive) {
   return [
-    "group flex h-11 shrink-0 items-center justify-between rounded-2xl border px-4 transition",
+    "group flex h-11 min-w-0 shrink-0 items-center justify-between gap-3 rounded-2xl border px-4 transition",
     isActive
       ? "border-accent bg-accent text-white shadow-lg shadow-teal-900/15"
       : "border-line bg-surface-strong text-foreground hover:border-accent/40 hover:bg-white",
@@ -40,8 +40,8 @@ export default function Sidebar({ context }) {
   const pathname = usePathname();
 
   return (
-    <aside className="sticky top-0 flex h-dvh w-72 shrink-0 flex-col overflow-y-auto overflow-x-hidden border-r border-line bg-[rgba(255,255,255,0.86)] px-5 py-4 backdrop-blur">
-      <div className="mb-3 h-[140px] shrink-0 rounded-3xl border border-line bg-surface-strong px-5 py-4 shadow-sm">
+    <aside className="relative top-auto flex w-full shrink-0 flex-col overflow-visible border-b border-line bg-[rgba(255,255,255,0.86)] px-4 py-4 backdrop-blur lg:sticky lg:top-0 lg:h-dvh lg:w-72 lg:overflow-y-auto lg:overflow-x-hidden lg:border-r lg:border-b-0 lg:px-5">
+      <div className="mb-3 h-auto min-h-[122px] shrink-0 rounded-3xl border border-line bg-surface-strong px-5 py-4 shadow-sm sm:min-h-[116px] lg:h-[140px]">
         <p className="font-mono text-xs uppercase tracking-[0.3em] text-accent">DANE</p>
         <h1 className="mt-2 text-2xl font-semibold leading-tight text-foreground">Trabajo infantil</h1>
         <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted">
@@ -50,7 +50,7 @@ export default function Sidebar({ context }) {
       </div>
 
       {context ? (
-        <div className="mb-3 h-[176px] shrink-0 rounded-3xl border border-line bg-slate-950 px-5 py-4 text-white shadow-sm">
+        <div className="mb-3 h-auto min-h-[156px] shrink-0 rounded-3xl border border-line bg-slate-950 px-5 py-4 text-white shadow-sm sm:min-h-[136px] lg:h-[176px]">
           <p className="h-4 truncate font-mono text-[11px] uppercase tracking-[0.28em] text-white/55">
             {context.eyebrow}
           </p>
@@ -75,13 +75,13 @@ export default function Sidebar({ context }) {
         </div>
       ) : null}
 
-      <nav className="flex shrink-0 flex-col gap-2">
+      <nav className="grid shrink-0 grid-cols-2 gap-2 sm:grid-cols-3 lg:flex lg:flex-col">
         {items.map((item) => {
           const isActive = isItemActive(item, pathname);
 
           return (
             <Link key={item.href} href={item.href} className={getItemClass(isActive)}>
-              <span className="text-sm font-semibold">{item.label}</span>
+              <span className="truncate text-sm font-semibold">{item.label}</span>
               <span className="font-mono text-xs uppercase tracking-[0.2em] opacity-70">
                 {item.shortLabel}
               </span>
@@ -90,7 +90,7 @@ export default function Sidebar({ context }) {
         })}
       </nav>
 
-      <div className="mt-auto h-[104px] shrink-0 rounded-3xl border border-line bg-surface px-4 py-3">
+      <div className="mt-3 hidden h-[104px] shrink-0 rounded-3xl border border-line bg-surface px-4 py-3 lg:mt-auto lg:block">
         <p className="font-mono text-xs uppercase tracking-[0.3em] text-muted">Sesion</p>
         <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted">
           Sin base de datos persistente. Los datasets cargados se guardan temporalmente en la sesion.
