@@ -7,6 +7,7 @@ import {
   getDefaultFilters,
 } from "@/lib/analytics/dashboard-calculations";
 import { cleanRows } from "@/lib/csv/cleaner";
+import { filterRowsForPasto } from "@/lib/csv/pasto-filter";
 import { parseCsvText } from "@/lib/csv/parser";
 import { getRegisteredDatasetById } from "@/lib/datasets/dataset-registry";
 import { listDatasets } from "@/lib/datasets/dataset-service";
@@ -76,19 +77,22 @@ export async function buildProcessedDatasetExport(datasetId) {
   if (dataset.cleanPath) {
     const content = await fs.readFile(dataset.cleanPath, "utf8");
     const cleaned = JSON.parse(content.replace(/^\uFEFF/, ""));
+    const columns = cleaned.columns || dataset.cleanedColumns || [];
+    const filteredRows = filterRowsForPasto(cleaned.rows || [], columns).rows;
 
     return {
       ok: true,
       dataset,
-      columns: cleaned.columns || dataset.cleanedColumns || [],
-      rows: cleaned.rows || [],
+      columns,
+      rows: filteredRows,
       generatedAt: cleaned.generatedAt || new Date().toISOString(),
     };
   }
 
   const rawContent = await fs.readFile(dataset.rawPath, "utf8");
   const parsed = parseCsvText(rawContent);
-  const cleaned = cleanRows(parsed.rows, {
+  const filtered = filterRowsForPasto(parsed.rows, parsed.headers);
+  const cleaned = cleanRows(filtered.rows, {
     headers: parsed.headers,
     dataset,
   });

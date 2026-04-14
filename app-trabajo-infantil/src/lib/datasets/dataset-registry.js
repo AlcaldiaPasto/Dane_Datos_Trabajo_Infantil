@@ -1,5 +1,6 @@
 import { promises as fs } from "node:fs";
 import { buildPreview, cleanRows } from "@/lib/csv/cleaner";
+import { buildPastoFilterRule, filterRowsForPasto } from "@/lib/csv/pasto-filter";
 import { parseCsvText } from "@/lib/csv/parser";
 import { getBaseDatasetCsvPath, getBaseDatasetMetadataPath, getSessionsRoot } from "@/lib/storage/file-store";
 
@@ -12,7 +13,8 @@ async function readCsvSnapshot(filePath, limit = 5) {
   const content = await fs.readFile(filePath, "utf8");
   const parsed = parseCsvText(content);
   const headers = parsed.headers;
-  const rows = parsed.rows;
+  const filterResult = filterRowsForPasto(parsed.rows, headers);
+  const rows = filterResult.rows;
 
   return {
     headers: headers.slice(0, 8),
@@ -21,7 +23,9 @@ async function readCsvSnapshot(filePath, limit = 5) {
     ),
     totalHeaders: headers,
     totalRows: rows.length,
+    sourceRows: parsed.rows.length,
     rawRows: rows,
+    pastoFilter: filterResult.summary,
   };
 }
 
@@ -37,12 +41,18 @@ async function loadBaseDataset() {
   return {
     ...metadata,
     rowCount: snapshot.totalRows,
+    sourceRowCount: snapshot.sourceRows,
     columnCount: snapshot.totalHeaders.length,
     columns: snapshot.totalHeaders,
     cleanedColumns: cleanResult.headers,
+    pastoFilter: snapshot.pastoFilter,
     previewBefore: { headers: snapshot.headers, rows: snapshot.rows },
     previewAfter: cleanResult.preview,
-    cleaningRulesApplied: [...(metadata.cleaningRulesApplied || []), ...cleanResult.rules],
+    cleaningRulesApplied: [
+      ...(metadata.cleaningRulesApplied || []),
+      buildPastoFilterRule(snapshot.pastoFilter),
+      ...cleanResult.rules,
+    ],
     rawPath: csvPath,
     cleanPath: null,
   };
@@ -54,11 +64,16 @@ async function hydrateSessionDataset(metadata) {
   try {
     const cleanContent = await fs.readFile(metadata.cleanPath, "utf8");
     const cleanDataset = JSON.parse(cleanContent.replace(/^\uFEFF/, ""));
+    const columns = cleanDataset.columns || metadata.cleanedColumns || [];
+    const filterResult = filterRowsForPasto(cleanDataset.rows || [], columns);
 
     return {
       ...metadata,
-      cleanedColumns: cleanDataset.columns || metadata.cleanedColumns || [],
-      previewAfter: metadata.previewAfter || buildPreview(cleanDataset.columns || [], cleanDataset.rows || []),
+      rowCount: filterResult.rows.length,
+      sourceRowCount: metadata.sourceRowCount || cleanDataset.rowCount || filterResult.summary.sourceRows,
+      cleanedColumns: columns,
+      pastoFilter: filterResult.summary,
+      previewAfter: buildPreview(columns, filterResult.rows),
     };
   } catch {
     return metadata;

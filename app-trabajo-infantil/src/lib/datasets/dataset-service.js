@@ -80,6 +80,8 @@ export async function reprocessDatasetById(datasetId) {
   const result = await processCsvText({
     csvText: csvText.replace(/^\uFEFF/, ""),
     originalFileName: dataset.originalFileName || dataset.fileName,
+    sourceCsvName: dataset.sourceCsvName || dataset.originalFileName || dataset.fileName,
+    archiveInfo: dataset.archiveInfo || null,
     datasetId,
     datasetDir,
     existingMetadata: dataset,

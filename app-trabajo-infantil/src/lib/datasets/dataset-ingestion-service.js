@@ -1,8 +1,10 @@
 import { createHash, randomUUID } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import JSZip from "jszip";
 import { DATASET_STATUS } from "@/lib/constants/dataset-status";
 import { cleanRows } from "@/lib/csv/cleaner";
+import { buildPastoFilterRule, filterRowsForPasto } from "@/lib/csv/pasto-filter";
 import { parseCsvText } from "@/lib/csv/parser";
 import { validateDatasetStructure } from "@/lib/csv/validator";
 import { detectYearFromFileName, detectYearFromRows } from "@/lib/csv/year-detector";
@@ -17,6 +19,76 @@ function sanitizeFileName(fileName) {
     .slice(0, 120);
 }
 
+function normalizeCsvText(content) {
+  return String(content || "").replace(/^\uFEFF/, "");
+}
+
+function isCsvFileName(fileName) {
+  return String(fileName || "").toLowerCase().endsWith(".csv");
+}
+
+function isZipFileName(fileName) {
+  return String(fileName || "").toLowerCase().endsWith(".zip");
+}
+
+function findCsvEntryInZip(zip) {
+  return Object.values(zip.files).find((entry) => {
+    const normalizedName = entry.name.toLowerCase();
+    return !entry.dir && normalizedName.startsWith("csv/") && normalizedName.endsWith(".csv");
+  });
+}
+
+async function readUploadedCsvSource(file, originalFileName) {
+  const fileBuffer = Buffer.from(await file.arrayBuffer());
+
+  if (isCsvFileName(originalFileName)) {
+    return {
+      ok: true,
+      csvText: normalizeCsvText(fileBuffer.toString("utf8")),
+      archiveInfo: null,
+      sourceCsvName: originalFileName,
+    };
+  }
+
+  if (!isZipFileName(originalFileName)) {
+    return {
+      ok: false,
+      statusCode: 400,
+      error: "El archivo debe tener extension .csv o .zip.",
+    };
+  }
+
+  try {
+    const zip = await JSZip.loadAsync(fileBuffer);
+    const csvEntry = findCsvEntryInZip(zip);
+
+    if (!csvEntry) {
+      return {
+        ok: false,
+        statusCode: 422,
+        error: "El ZIP debe contener al menos un archivo CSV dentro de la carpeta CSV.",
+      };
+    }
+
+    return {
+      ok: true,
+      csvText: normalizeCsvText(await csvEntry.async("string")),
+      archiveInfo: {
+        isArchive: true,
+        archiveName: originalFileName,
+        sourceCsvName: csvEntry.name,
+      },
+      sourceCsvName: csvEntry.name,
+    };
+  } catch {
+    return {
+      ok: false,
+      statusCode: 422,
+      error: "No fue posible leer el ZIP. Verifica que no este corrupto y que incluya la carpeta CSV.",
+    };
+  }
+}
+
 function buildRawPreview(headers, rows, limit = 8) {
   const visibleHeaders = headers.slice(0, 10);
 
@@ -28,20 +100,48 @@ function buildRawPreview(headers, rows, limit = 8) {
   };
 }
 
-function buildProcessLog({ now, parsed, validation, detectedYear, status, duplicateOf }) {
+function buildProcessLog({ now, parsed, validation, detectedYear, status, duplicateOf, archiveInfo, pastoFilter }) {
   const log = [
     {
       label: "Archivo recibido",
-      note: "Se recibio el CSV y se preparo una copia temporal para la sesion.",
+      note: archiveInfo?.isArchive
+        ? "Se recibio un ZIP y se preparo la copia temporal del CSV extraido para la sesion."
+        : "Se recibio el CSV y se preparo una copia temporal para la sesion.",
       status: "complete",
       createdAt: now,
     },
+  ];
+
+  if (archiveInfo?.isArchive) {
+    log.push({
+      label: "Extraccion ZIP",
+      note: `Se leyo el archivo interno ${archiveInfo.sourceCsvName} desde la carpeta CSV del ZIP.`,
+      status: "complete",
+      createdAt: now,
+    });
+  }
+
+  log.push(
     {
       label: "Lectura CSV",
-      note: `Se detectaron ${parsed.rows.length} filas, ${parsed.headers.length} columnas y separador '${parsed.delimiter || ","}'.`,
+      note: `Se detectaron ${parsed.sourceRows ?? parsed.rows.length} filas originales, ${parsed.headers.length} columnas y separador '${parsed.delimiter || ","}'.`,
       status: parsed.errors.length ? "warning" : "complete",
       createdAt: now,
-    },
+    }
+  );
+
+  if (pastoFilter) {
+    log.push({
+      label: "Filtro territorial Pasto",
+      note: pastoFilter.applied
+        ? `Se conservaron ${pastoFilter.keptRows} de ${pastoFilter.sourceRows} filas usando ${pastoFilter.rule}.`
+        : "No se encontro columna geografica reconocida; se conservaron las filas originales.",
+      status: pastoFilter.applied ? "complete" : "warning",
+      createdAt: now,
+    });
+  }
+
+  log.push(
     {
       label: "Validacion estructural",
       note: validation.isValid
@@ -64,7 +164,7 @@ function buildProcessLog({ now, parsed, validation, detectedYear, status, duplic
       status: detectedYear ? "complete" : "warning",
       createdAt: now,
     },
-  ];
+  );
 
   if (duplicateOf) {
     log.push({
@@ -93,15 +193,23 @@ async function findDuplicateDataset(contentHash) {
 export async function processCsvText({
   csvText,
   originalFileName,
+  sourceCsvName,
+  archiveInfo,
   datasetId,
   datasetDir,
   existingMetadata = {},
   contentHash,
 }) {
-  const parsed = parseCsvText(csvText);
+  const parsedSource = parseCsvText(csvText);
+  const pastoFilter = filterRowsForPasto(parsedSource.rows, parsedSource.headers);
+  const parsed = {
+    ...parsedSource,
+    rows: pastoFilter.rows,
+    sourceRows: parsedSource.rows.length,
+  };
   const validation = validateDatasetStructure(parsed.headers, parsed.rows);
   const yearFromRows = detectYearFromRows(parsed.headers, parsed.rows);
-  const detectedYear = yearFromRows || detectYearFromFileName(originalFileName);
+  const detectedYear = yearFromRows || detectYearFromFileName(sourceCsvName) || detectYearFromFileName(originalFileName);
   const yearSource = yearFromRows ? "column" : detectedYear ? "filename" : "unknown";
   const now = new Date().toISOString();
   const safeFileName = sanitizeFileName(originalFileName);
@@ -112,6 +220,7 @@ export async function processCsvText({
     ...parsed.errors.slice(0, 10).map((error) => `CSV: ${error.message}`),
     ...validation.missingColumns.map((column) => `Falta columna obligatoria: ${column}`),
     ...validation.warnings.slice(0, 50),
+    ...pastoFilter.issues,
     ...(detectedYear ? [] : ["No se pudo detectar el anio desde columna ni nombre de archivo."]),
   ];
   const status = validation.isValid ? DATASET_STATUS.CLEAN : DATASET_STATUS.ERROR;
@@ -131,11 +240,15 @@ export async function processCsvText({
         {
           datasetId,
           sourceFileName: safeFileName,
+          sourceCsvName: sourceCsvName || originalFileName,
+          archiveInfo: archiveInfo || null,
           detectedYear,
           rowCount: cleanResult.rows.length,
+          sourceRowCount: parsed.sourceRows,
           columnCount: cleanResult.headers.length,
           columns: cleanResult.headers,
           rows: cleanResult.rows,
+          pastoFilter: pastoFilter.summary,
           generatedAt: now,
         },
         null,
@@ -154,12 +267,15 @@ export async function processCsvText({
     sessionId: existingMetadata.sessionId || getDefaultSessionId(),
     fileName: safeFileName,
     originalFileName,
+    sourceCsvName: sourceCsvName || originalFileName,
+    archiveInfo: archiveInfo || null,
     detectedYear,
     yearSource,
     isPrimary: false,
     status,
     readyForAnalysis: status === DATASET_STATUS.CLEAN,
     rowCount: parsed.rows.length,
+    sourceRowCount: parsed.sourceRows,
     columnCount: parsed.headers.length,
     uploadedAt: existingMetadata.uploadedAt || now,
     updatedAt: now,
@@ -168,6 +284,7 @@ export async function processCsvText({
     contentHash: contentHash || existingMetadata.contentHash || null,
     columns: parsed.headers,
     cleanedColumns: cleanResult?.headers || [],
+    pastoFilter: pastoFilter.summary,
     previewBefore: preview,
     previewAfter: cleanResult?.preview || preview,
     cleaningRulesApplied: [
@@ -176,11 +293,13 @@ export async function processCsvText({
       "Validacion estructural contra columnas obligatorias minimas.",
       "Validacion avanzada de columnas sugeridas, duplicados, catalogos y rangos esperados.",
       `Separador CSV detectado automaticamente: ${parsed.delimiter || ","}.`,
+      archiveInfo?.isArchive ? `ZIP procesado: se extrajo ${archiveInfo.sourceCsvName} desde la carpeta CSV.` : null,
+      buildPastoFilterRule(pastoFilter.summary),
       "Deteccion de anio por columna o nombre de archivo.",
       ...(cleanResult?.rules || []),
-    ],
+    ].filter(Boolean),
     issues,
-    processLog: buildProcessLog({ now, parsed, validation, detectedYear, status }),
+    processLog: buildProcessLog({ now, parsed, validation, detectedYear, status, archiveInfo, pastoFilter: pastoFilter.summary }),
   };
 
   await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2), "utf8");
@@ -198,21 +317,27 @@ export async function ingestCsvFile(file) {
     return {
       ok: false,
       statusCode: 400,
-      error: "No se recibio ningun archivo CSV.",
+      error: "No se recibio ningun archivo CSV o ZIP.",
     };
   }
 
   const originalFileName = file.name || "dataset.csv";
 
-  if (!originalFileName.toLowerCase().endsWith(".csv")) {
+  if (!isCsvFileName(originalFileName) && !isZipFileName(originalFileName)) {
     return {
       ok: false,
       statusCode: 400,
-      error: "El archivo debe tener extension .csv.",
+      error: "El archivo debe tener extension .csv o .zip.",
     };
   }
 
-  const csvText = Buffer.from(await file.arrayBuffer()).toString("utf8").replace(/^\uFEFF/, "");
+  const source = await readUploadedCsvSource(file, originalFileName);
+
+  if (!source.ok) {
+    return source;
+  }
+
+  const { csvText, archiveInfo, sourceCsvName } = source;
   const contentHash = createHash("sha256").update(csvText).digest("hex");
   const duplicate = await findDuplicateDataset(contentHash);
 
@@ -246,6 +371,8 @@ export async function ingestCsvFile(file) {
   return processCsvText({
     csvText,
     originalFileName,
+    sourceCsvName,
+    archiveInfo,
     datasetId,
     datasetDir,
     contentHash,

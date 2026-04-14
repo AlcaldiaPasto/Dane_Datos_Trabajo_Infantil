@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { filterRowsForPasto } from "../src/lib/csv/pasto-filter.js";
 import { detectCsvDelimiter, parseCsvText } from "../src/lib/csv/parser.js";
 import { validateDatasetStructure } from "../src/lib/csv/validator.js";
 
@@ -40,4 +41,20 @@ test("valida el dataset base 2024 sin advertencias falsas", () => {
   assert.equal(parsed.headers.length, 132);
   assert.equal(validation.isValid, true);
   assert.equal(validation.warnings.length, 0);
+});
+
+test("filtra registros de Pasto usando codigo AREA 52 del DANE", () => {
+  const rows = [
+    { DIRECTORIO: "1", AREA: "05", ORDEN: "1" },
+    { DIRECTORIO: "2", AREA: "52", ORDEN: "2" },
+    { DIRECTORIO: "3", AREA: "99", ORDEN: "3" },
+  ];
+
+  const result = filterRowsForPasto(rows, ["DIRECTORIO", "AREA", "ORDEN"]);
+
+  assert.equal(result.summary.applied, true);
+  assert.equal(result.summary.rule, "AREA = 52");
+  assert.equal(result.summary.sourceRows, 3);
+  assert.equal(result.summary.keptRows, 1);
+  assert.deepEqual(result.rows, [{ DIRECTORIO: "2", AREA: "52", ORDEN: "2" }]);
 });

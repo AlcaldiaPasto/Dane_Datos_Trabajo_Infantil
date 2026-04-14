@@ -33,20 +33,22 @@ export default function CsvUploadPanel() {
     if (!file) {
       return {
         tone: "pending",
-        message: "Selecciona un archivo CSV para iniciar la validacion.",
+        message: "Selecciona un archivo CSV o ZIP para iniciar la validacion.",
       };
     }
 
-    if (!file.name.toLowerCase().endsWith(".csv")) {
+    if (!file.name.toLowerCase().endsWith(".csv") && !file.name.toLowerCase().endsWith(".zip")) {
       return {
         tone: "error",
-        message: "El archivo seleccionado no tiene extension .csv.",
+        message: "El archivo seleccionado no tiene extension .csv o .zip.",
       };
     }
 
     return {
       tone: "clean",
-      message: "Extension valida. La estructura se validara al subir el archivo.",
+      message: file.name.toLowerCase().endsWith(".zip")
+        ? "ZIP valido. Se buscara un CSV dentro de la carpeta CSV y se filtrara Pasto."
+        : "CSV valido. La estructura se validara y se filtrara Pasto al subir el archivo.",
     };
   }, [file]);
 
@@ -56,7 +58,7 @@ export default function CsvUploadPanel() {
     setResult(null);
 
     if (!file) {
-      setError("Selecciona un archivo CSV antes de procesar.");
+      setError("Selecciona un archivo CSV o ZIP antes de procesar.");
       return;
     }
 
@@ -88,15 +90,15 @@ export default function CsvUploadPanel() {
   return (
     <div className="mx-auto flex w-full max-w-[860px] flex-col gap-6">
       <Card
-        title="Ingresar nuevo CSV"
-        subtitle="Sube un archivo del DANE para validarlo, registrar su ano y dejarlo disponible en el listado de datasets."
+        title="Ingresar nuevo CSV o ZIP"
+        subtitle="Sube un archivo del DANE para validarlo, extraerlo si viene en ZIP, filtrar Pasto y dejarlo disponible en datasets."
         interactive
       >
         <form onSubmit={handleSubmit} className="space-y-5">
           <label className="block rounded-[28px] border-2 border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center transition hover:border-accent hover:bg-accent-soft/40">
             <input
               type="file"
-              accept=".csv,text/csv"
+              accept=".csv,.zip,text/csv,application/zip,application/x-zip-compressed"
               className="sr-only"
               onChange={(event) => {
                 setFile(event.target.files?.[0] || null);
@@ -104,9 +106,9 @@ export default function CsvUploadPanel() {
                 setError("");
               }}
             />
-            <span className="text-lg font-semibold text-foreground">Seleccionar archivo CSV</span>
+            <span className="text-lg font-semibold text-foreground">Seleccionar archivo CSV o ZIP</span>
             <span className="mt-3 block text-sm leading-6 text-muted">
-              El archivo original no se modifica. Se guarda una copia temporal en la sesion.
+              Si subes un ZIP, se leera el CSV ubicado dentro de la carpeta CSV. El original no se modifica.
             </span>
           </label>
 
@@ -133,13 +135,13 @@ export default function CsvUploadPanel() {
             disabled={!file || isUploading}
             className="w-full rounded-2xl bg-accent px-5 py-4 text-sm font-bold text-white shadow-lg shadow-teal-900/15 transition hover:-translate-y-0.5 hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
           >
-            {isUploading ? "Procesando archivo..." : "Subir y procesar CSV"}
+            {isUploading ? "Procesando archivo..." : "Subir y procesar archivo"}
           </button>
         </form>
       </Card>
 
       <div className="space-y-6">
-        <Card title="Resumen del archivo" subtitle="Informacion local detectada antes de enviar el CSV al servidor.">
+        <Card title="Resumen del archivo" subtitle="Informacion local detectada antes de enviar el archivo al servidor.">
           <dl className="grid items-stretch gap-4 md:grid-cols-2">
             <div className="rounded-[24px] border border-line bg-surface px-5 py-5">
               <dt className="font-mono text-[11px] uppercase tracking-[0.26em] text-muted">
@@ -183,7 +185,7 @@ export default function CsvUploadPanel() {
                 <div>
                   <p className="text-sm font-semibold text-foreground">{result.dataset.fileName}</p>
                   <p className="mt-1 text-sm text-muted">
-                    Ano: {result.dataset.detectedYear || "No identificado"} - Filas: {result.dataset.rowCount} - Columnas: {result.dataset.columnCount}
+                    Ano: {result.dataset.detectedYear || "No identificado"} - Filas Pasto: {result.dataset.rowCount} - Columnas: {result.dataset.columnCount}
                   </p>
                 </div>
                 <StatusPill status={result.dataset.status} />
