@@ -12,15 +12,9 @@ export default function AppShell({
     title,
     description,
   };
-  const shellClass = fixedViewport
-    ? "flex min-h-dvh flex-col overflow-x-hidden bg-background text-foreground lg:h-dvh lg:flex-row lg:overflow-hidden"
-    : "flex min-h-dvh flex-col overflow-x-hidden bg-background text-foreground lg:flex-row";
-  const contentClass = fixedViewport
-    ? "flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden px-4 py-4 sm:px-5 lg:h-dvh lg:overflow-y-auto xl:px-6"
-    : "flex min-h-0 min-w-0 flex-1 flex-col px-4 py-4 sm:px-5 xl:px-6";
-  const mainClass = fixedViewport
-    ? "flex min-h-full min-w-0 flex-1"
-    : "flex min-w-0 flex-1";
+  const shellClass = "flex min-h-dvh flex-col bg-background text-foreground lg:flex-row";
+  const contentClass = "flex min-h-0 min-w-0 flex-1 flex-col px-4 py-4 sm:px-5 xl:px-6";
+  const mainClass = fixedViewport ? "flex min-h-full min-w-0 flex-1" : "flex min-w-0 flex-1";
 
   return (
     <div className={shellClass}>

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const items = [
   { href: "/", label: "Dashboard", shortLabel: "01", icon: "dashboard", match: "exact" },
@@ -28,10 +28,12 @@ function isItemActive(item, pathname) {
   return pathname.startsWith(item.href);
 }
 
-function getItemClass(isActive, isOpen) {
+function getItemClass(isActive, isExpanded) {
   return [
     "group flex h-11 min-w-0 shrink-0 items-center gap-3 rounded-2xl border transition",
-    isOpen ? "justify-between px-4" : "justify-center px-0",
+    isExpanded
+      ? "justify-between px-4"
+      : "justify-center px-0 text-foreground [&_svg]:h-6 [&_svg]:w-6 [&_svg]:stroke-[2]",
     isActive
       ? "border-accent bg-accent text-white shadow-lg shadow-teal-900/15"
       : "border-line bg-surface-strong text-foreground hover:border-accent/40 hover:bg-white",
@@ -126,14 +128,45 @@ function ChevronIcon({ isOpen }) {
   );
 }
 
-function MenuToggle({ isOpen, onClick }) {
+function MobileMenuIcon({ isOpen }) {
+  return (
+    <svg
+      className="h-5 w-5"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.9"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {isOpen ? (
+        <>
+          <path d="m7 7 10 10" />
+          <path d="m17 7-10 10" />
+        </>
+      ) : (
+        <>
+          <path d="M5 7h14" />
+          <path d="M5 12h14" />
+          <path d="M5 17h14" />
+        </>
+      )}
+    </svg>
+  );
+}
+
+function MenuToggle({ isOpen, onClick, className = "", ariaLabel }) {
   return (
     <button
       type="button"
       onClick={onClick}
       aria-expanded={isOpen}
-      aria-label={isOpen ? "Cerrar menu" : "Abrir menu"}
-      className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-line bg-white text-foreground shadow-sm transition hover:border-accent hover:bg-accent-soft"
+      aria-label={ariaLabel || (isOpen ? "Cerrar menu" : "Abrir menu")}
+      className={[
+        "h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-line bg-white text-foreground shadow-sm transition hover:border-accent hover:bg-accent-soft",
+        className,
+      ].join(" ")}
     >
       <ChevronIcon isOpen={isOpen} />
     </button>
@@ -142,83 +175,151 @@ function MenuToggle({ isOpen, onClick }) {
 
 export default function Sidebar({ context }) {
   const pathname = usePathname();
-  const [isOpen, setIsOpen] = useState(true);
+  const [isDesktopOpen, setIsDesktopOpen] = useState(true);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const showExpanded = isMobileOpen || isDesktopOpen;
 
-  function toggleMenu() {
-    setIsOpen((currentValue) => !currentValue);
+  function toggleDesktopMenu() {
+    setIsDesktopOpen((currentValue) => !currentValue);
   }
 
+  function toggleMobileMenu() {
+    setIsMobileOpen((currentValue) => !currentValue);
+  }
+
+  function closeMobileMenu() {
+    setIsMobileOpen(false);
+  }
+
+  useEffect(() => {
+    if (!isMobileOpen) {
+      return undefined;
+    }
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [isMobileOpen]);
+
   return (
-    <aside
-      className={[
-        "relative top-auto flex w-full shrink-0 flex-col border-b border-line bg-[rgba(255,255,255,0.9)] backdrop-blur transition-all duration-300 lg:sticky lg:top-0 lg:h-dvh lg:border-r lg:border-b-0",
-        isOpen
-          ? "overflow-visible px-4 py-4 lg:w-72 lg:overflow-y-auto lg:overflow-x-hidden lg:px-5"
-          : "overflow-hidden px-3 py-3 lg:w-20 lg:overflow-y-auto lg:overflow-x-hidden",
-      ].join(" ")}
-    >
-      <div
+    <>
+      <button
+        type="button"
+        onClick={toggleMobileMenu}
+        aria-expanded={isMobileOpen}
+        aria-label={isMobileOpen ? "Cerrar menu" : "Abrir menu"}
         className={[
-          "mb-3 flex shrink-0 items-start gap-3 rounded-3xl border border-line bg-surface-strong shadow-sm transition-all",
-          isOpen ? "min-h-[164px] px-6 py-5 lg:min-h-[188px]" : "h-14 items-center px-3 py-2",
+          "fixed right-4 top-4 z-[60] inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-line bg-white text-foreground shadow-lg transition hover:border-accent hover:bg-accent-soft lg:hidden",
         ].join(" ")}
       >
-        <div className="min-w-0 flex-1">
-          <p className="font-mono text-xs uppercase tracking-[0.3em] text-accent">DANE</p>
-          {isOpen ? (
+        <MobileMenuIcon isOpen={isMobileOpen} />
+      </button>
+
+      <button
+        type="button"
+        aria-hidden={!isMobileOpen}
+        onClick={() => setIsMobileOpen(false)}
+        className={[
+          "fixed inset-0 z-40 bg-slate-900/30 transition-opacity lg:hidden",
+          isMobileOpen ? "opacity-100" : "pointer-events-none opacity-0",
+        ].join(" ")}
+      />
+
+      <aside
+        className={[
+          "fixed inset-y-0 right-0 z-50 flex w-[84vw] max-w-[360px] shrink-0 flex-col border-l border-line bg-[rgba(255,255,255,0.96)] px-4 py-4 shadow-2xl backdrop-blur transition-transform duration-300 overflow-y-auto",
+          isMobileOpen ? "translate-x-0" : "translate-x-full",
+          "lg:sticky lg:top-0 lg:inset-auto lg:z-auto lg:h-dvh lg:self-start lg:translate-x-0 lg:overflow-y-auto lg:border-l-0 lg:border-r lg:border-b-0 lg:bg-[rgba(255,255,255,0.9)] lg:shadow-none",
+          showExpanded ? "lg:w-80 lg:px-5" : "lg:w-20 lg:px-3",
+        ].join(" ")}
+      >
+        <div
+          className={[
+            "mb-3 flex shrink-0 items-start gap-3 rounded-3xl border border-line bg-surface-strong shadow-sm transition-all",
+            showExpanded ? "min-h-[164px] px-6 py-5 lg:min-h-[188px]" : "h-14 items-center px-3 py-2",
+          ].join(" ")}
+        >
+          {showExpanded ? (
             <>
-              <h1 className="mt-3 text-2xl font-semibold leading-tight text-foreground">Trabajo infantil</h1>
-              <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted">
-                Flujo: subir CSV, validar, listar, abrir detalle y comparar anos.
-              </p>
-              {context?.title ? (
-                <p className="mt-4 inline-flex max-w-full rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white shadow-sm">
-                  <span className="truncate">{context.title}</span>
+              <div className="min-w-0 flex-1">
+                <p className="font-mono text-xs uppercase tracking-[0.3em] text-accent">DANE</p>
+                <h1 className="mt-3 text-2xl font-semibold leading-tight text-foreground">Trabajo infantil</h1>
+                <p className="mt-2 text-sm leading-6 text-muted">
+                  Flujo: subir CSV, validar, listar, abrir detalle y comparar anos.
                 </p>
-              ) : null}
+                {context?.title ? (
+                  <p className="mt-4 text-sm font-semibold leading-5 text-foreground">{context.title}</p>
+                ) : null}
+              </div>
+              <MenuToggle
+                isOpen={isDesktopOpen}
+                onClick={toggleDesktopMenu}
+                className="hidden lg:inline-flex"
+                ariaLabel="Alternar menu de escritorio"
+              />
             </>
-          ) : null}
+          ) : (
+            <div className="flex w-full items-center justify-center">
+              <MenuToggle
+                isOpen={isDesktopOpen}
+                onClick={toggleDesktopMenu}
+                className="hidden lg:inline-flex"
+                ariaLabel="Alternar menu de escritorio"
+              />
+            </div>
+          )}
         </div>
-        <MenuToggle isOpen={isOpen} onClick={toggleMenu} />
-      </div>
 
-      <nav
-        className={[
-          "shrink-0 gap-2",
-          isOpen ? "grid grid-cols-2 sm:grid-cols-3 lg:flex lg:flex-col" : "hidden lg:flex lg:flex-col",
-        ].join(" ")}
-      >
-        {items.map((item) => {
-          const isActive = isItemActive(item, pathname);
+        <nav
+          className={[
+            "shrink-0 gap-2",
+            showExpanded ? "flex flex-col" : "hidden lg:flex lg:flex-col",
+          ].join(" ")}
+        >
+          {items.map((item) => {
+            const isActive = isItemActive(item, pathname);
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              aria-current={isActive ? "page" : undefined}
-              title={item.label}
-              className={getItemClass(isActive, isOpen)}
-            >
-              <span className={isOpen ? "flex min-w-0 items-center gap-3" : "flex items-center justify-center"}>
-                <MenuIcon name={item.icon} />
-                {isOpen ? <span className="truncate text-sm font-semibold">{item.label}</span> : null}
-              </span>
-              {isOpen ? (
-                <span className="font-mono text-xs uppercase tracking-[0.2em] opacity-70">{item.shortLabel}</span>
-              ) : null}
-            </Link>
-          );
-        })}
-      </nav>
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={isActive ? "page" : undefined}
+                title={item.label}
+                className={getItemClass(isActive, showExpanded)}
+                onClick={closeMobileMenu}
+              >
+                <span
+                  className={
+                    showExpanded
+                      ? "flex min-w-0 items-center gap-3"
+                      : "inline-flex h-6 w-6 items-center justify-center text-current"
+                  }
+                >
+                  <MenuIcon name={item.icon} className={showExpanded ? "h-5 w-5" : "h-6 w-6"} />
+                  {showExpanded ? <span className="text-sm font-semibold leading-tight">{item.label}</span> : null}
+                </span>
+                {showExpanded ? (
+                  <span className="hidden font-mono text-xs uppercase tracking-[0.2em] opacity-70 xl:inline">
+                    {item.shortLabel}
+                  </span>
+                ) : null}
+              </Link>
+            );
+          })}
+        </nav>
 
-      {isOpen ? (
-        <div className="mt-3 hidden h-[104px] shrink-0 rounded-3xl border border-line bg-surface px-4 py-3 lg:mt-auto lg:block">
-          <p className="font-mono text-xs uppercase tracking-[0.3em] text-muted">Sesion</p>
-          <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted">
-            Sin base de datos persistente. Los datasets cargados se guardan temporalmente en la sesion.
-          </p>
-        </div>
-      ) : null}
-    </aside>
+        {showExpanded ? (
+          <div className="mt-3 hidden min-h-[104px] shrink-0 rounded-3xl border border-line bg-surface px-4 py-3 lg:mt-auto lg:block">
+            <p className="font-mono text-xs uppercase tracking-[0.3em] text-muted">Sesion</p>
+            <p className="mt-2 text-sm leading-6 text-muted">
+              Sin base de datos persistente. Los datasets cargados se guardan temporalmente en la sesion.
+            </p>
+          </div>
+        ) : null}
+      </aside>
+    </>
   );
 }

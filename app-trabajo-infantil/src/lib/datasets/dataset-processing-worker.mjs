@@ -18,11 +18,45 @@ function isZipFileName(fileName) {
   return String(fileName || "").toLowerCase().endsWith(".zip");
 }
 
+function normalizeZipEntryName(filePath) {
+  return String(filePath || "").replace(/\\/g, "/").toLowerCase();
+}
+
+function scoreZipCsvCandidate(entry) {
+  const normalizedName = normalizeZipEntryName(entry.name);
+  const depth = normalizedName.split("/").length;
+  const isInsideCsvFolder = normalizedName.startsWith("csv/") || normalizedName.includes("/csv/");
+  const isHidden = path.posix.basename(normalizedName).startsWith(".");
+  const isMacOsMeta = normalizedName.startsWith("__macosx/");
+  const safeDepthScore = Math.max(0, 20 - depth);
+
+  if (isHidden || isMacOsMeta) {
+    return Number.NEGATIVE_INFINITY;
+  }
+
+  return (isInsideCsvFolder ? 100 : 0) + safeDepthScore;
+}
+
 function findCsvEntryInZip(zip) {
-  return Object.values(zip.files).find((entry) => {
-    const normalizedName = entry.name.toLowerCase();
-    return !entry.dir && normalizedName.startsWith("csv/") && normalizedName.endsWith(".csv");
+  const candidates = Object.values(zip.files).filter((entry) => {
+    const normalizedName = normalizeZipEntryName(entry.name);
+    return !entry.dir && normalizedName.endsWith(".csv");
   });
+
+  if (!candidates.length) {
+    return null;
+  }
+
+  return candidates
+    .map((entry) => ({ entry, score: scoreZipCsvCandidate(entry) }))
+    .filter(({ score }) => Number.isFinite(score))
+    .sort((left, right) => {
+      if (right.score !== left.score) {
+        return right.score - left.score;
+      }
+
+      return normalizeZipEntryName(left.entry.name).localeCompare(normalizeZipEntryName(right.entry.name));
+    })[0]?.entry || null;
 }
 
 async function readUploadedCsvSource(uploadPath, originalFileName) {
@@ -44,7 +78,7 @@ async function readUploadedCsvSource(uploadPath, originalFileName) {
   const csvEntry = findCsvEntryInZip(zip);
 
   if (!csvEntry) {
-    throw new Error("El ZIP debe contener al menos un archivo CSV dentro de la carpeta CSV.");
+    throw new Error("El ZIP debe contener al menos un archivo CSV en cualquier carpeta interna.");
   }
 
   return {

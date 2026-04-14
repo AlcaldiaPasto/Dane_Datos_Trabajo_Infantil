@@ -53,7 +53,7 @@ function buildProcessLog({ now, parsed, validation, detectedYear, status, duplic
   if (archiveInfo?.isArchive) {
     log.push({
       label: "Extraccion ZIP",
-      note: `Se leyo el archivo interno ${archiveInfo.sourceCsvName} desde la carpeta CSV del ZIP.`,
+      note: `Se leyo el archivo interno ${archiveInfo.sourceCsvName} dentro del ZIP.`,
       status: "complete",
       createdAt: now,
     });
@@ -245,7 +245,7 @@ export async function processCsvText({
       "Validacion estructural contra columnas obligatorias minimas.",
       "Validacion avanzada de columnas sugeridas, duplicados, catalogos y rangos esperados.",
       `Separador CSV detectado automaticamente: ${parsed.delimiter || ","}.`,
-      archiveInfo?.isArchive ? `ZIP procesado: se extrajo ${archiveInfo.sourceCsvName} desde la carpeta CSV.` : null,
+      archiveInfo?.isArchive ? `ZIP procesado: se extrajo ${archiveInfo.sourceCsvName} dentro del ZIP.` : null,
       buildPastoFilterRule(pastoFilter.summary),
       "Deteccion de anio por columna o nombre de archivo.",
       ...(cleanResult?.rules || []),
