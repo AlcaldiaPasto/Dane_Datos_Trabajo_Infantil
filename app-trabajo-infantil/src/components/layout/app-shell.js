@@ -13,13 +13,13 @@ export default function AppShell({
     description,
   };
   const shellClass = fixedViewport
-    ? "flex h-screen overflow-hidden bg-background text-foreground"
+    ? "flex h-dvh overflow-hidden bg-background text-foreground"
     : "flex min-h-screen overflow-x-hidden bg-background text-foreground";
   const contentClass = fixedViewport
-    ? "flex h-screen min-w-0 flex-1 flex-col overflow-hidden px-5 py-5 xl:px-6"
+    ? "flex h-dvh min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden px-5 py-5 xl:px-6"
     : "flex min-h-screen min-w-0 flex-1 flex-col px-5 py-5 xl:px-6";
   const mainClass = fixedViewport
-    ? "flex min-h-0 min-w-0 flex-1 overflow-hidden"
+    ? "flex min-h-full min-w-0 flex-1"
     : "flex min-w-0 flex-1";
 
   return (
@@ -27,7 +27,7 @@ export default function AppShell({
       <Sidebar context={context} />
       <div className={contentClass}>
         <main className={mainClass}>
-          <div className={`flex w-full flex-col ${fixedViewport ? "h-full" : "min-h-full"}`}>{children}</div>
+          <div className="flex min-h-full w-full flex-col">{children}</div>
         </main>
       </div>
     </div>

@@ -34,7 +34,7 @@ function DashboardAnalyticsFrame({
   children,
 }) {
   return (
-    <section className="mt-4 grid min-w-0 items-stretch gap-5 xl:grid-cols-[minmax(340px,0.78fr)_minmax(0,1.22fr)]">
+    <section className="mt-4 grid min-w-0 items-start gap-5 xl:grid-cols-[minmax(340px,0.78fr)_minmax(0,1.22fr)]">
       <FilterPanel
         filters={filters}
         options={filterOptions}
@@ -45,7 +45,7 @@ function DashboardAnalyticsFrame({
         onPageChange={onPageChange}
       />
 
-      <div className="grid h-full min-w-0 gap-5">{children}</div>
+      <div className="grid min-w-0 gap-5">{children}</div>
     </section>
   );
 }
@@ -115,7 +115,7 @@ export default function DashboardClient({ records }) {
   }
 
   return (
-    <div className="flex h-full min-w-0 flex-col overflow-hidden">
+    <div className="flex min-h-full min-w-0 flex-col">
       <KpiGrid kpis={snapshot.kpis} />
 
       <DashboardAnalyticsFrame

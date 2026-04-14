@@ -29,7 +29,7 @@ function isItemActive(item, pathname) {
 
 function getItemClass(isActive) {
   return [
-    "group flex h-12 items-center justify-between rounded-2xl border px-4 transition",
+    "group flex h-11 shrink-0 items-center justify-between rounded-2xl border px-4 transition",
     isActive
       ? "border-accent bg-accent text-white shadow-lg shadow-teal-900/15"
       : "border-line bg-surface-strong text-foreground hover:border-accent/40 hover:bg-white",
@@ -40,42 +40,42 @@ export default function Sidebar({ context }) {
   const pathname = usePathname();
 
   return (
-    <aside className="sticky top-0 flex h-screen w-72 shrink-0 flex-col overflow-hidden border-r border-line bg-[rgba(255,255,255,0.86)] px-5 py-5 backdrop-blur">
-      <div className="mb-4 h-[154px] shrink-0 rounded-3xl border border-line bg-surface-strong px-5 py-5 shadow-sm">
+    <aside className="sticky top-0 flex h-dvh w-72 shrink-0 flex-col overflow-y-auto overflow-x-hidden border-r border-line bg-[rgba(255,255,255,0.86)] px-5 py-4 backdrop-blur">
+      <div className="mb-3 h-[140px] shrink-0 rounded-3xl border border-line bg-surface-strong px-5 py-4 shadow-sm">
         <p className="font-mono text-xs uppercase tracking-[0.3em] text-accent">DANE</p>
-        <h1 className="mt-3 text-2xl font-semibold leading-tight text-foreground">Trabajo infantil</h1>
+        <h1 className="mt-2 text-2xl font-semibold leading-tight text-foreground">Trabajo infantil</h1>
         <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted">
           Flujo: subir CSV, validar, listar, abrir detalle y comparar anos.
         </p>
       </div>
 
       {context ? (
-        <div className="mb-4 h-[194px] shrink-0 rounded-3xl border border-line bg-slate-950 px-5 py-4 text-white shadow-sm">
+        <div className="mb-3 h-[176px] shrink-0 rounded-3xl border border-line bg-slate-950 px-5 py-4 text-white shadow-sm">
           <p className="h-4 truncate font-mono text-[11px] uppercase tracking-[0.28em] text-white/55">
             {context.eyebrow}
           </p>
           <h2 className="mt-2 line-clamp-1 text-lg font-semibold leading-tight">{context.title}</h2>
-          <p className="mt-2 h-12 overflow-hidden text-sm leading-6 text-white/65">{context.description}</p>
-          <div className="mt-4 h-10">
+          <p className="mt-2 h-10 overflow-hidden text-sm leading-5 text-white/65">{context.description}</p>
+          <div className="mt-3 h-9">
             {context.actionHref && context.actionLabel ? (
               <Link
                 href={context.actionHref}
-                className="inline-flex h-10 w-full items-center justify-center rounded-2xl bg-accent px-4 text-sm font-bold text-white transition hover:bg-teal-700"
+                className="inline-flex h-9 w-full items-center justify-center rounded-2xl bg-accent px-4 text-sm font-bold text-white transition hover:bg-teal-700"
               >
                 {context.actionLabel}
               </Link>
             ) : context.badge ? (
-              <div className="inline-flex h-10 max-w-full items-center rounded-full bg-white/10 px-4 font-mono text-[11px] uppercase tracking-[0.22em] text-white/80">
+              <div className="inline-flex h-9 max-w-full items-center rounded-full bg-white/10 px-4 font-mono text-[11px] uppercase tracking-[0.22em] text-white/80">
                 <span className="truncate">{context.badge}</span>
               </div>
             ) : (
-              <div className="h-10" />
+              <div className="h-9" />
             )}
           </div>
         </div>
       ) : null}
 
-      <nav className="flex shrink-0 flex-col gap-3">
+      <nav className="flex shrink-0 flex-col gap-2">
         {items.map((item) => {
           const isActive = isItemActive(item, pathname);
 
@@ -90,9 +90,9 @@ export default function Sidebar({ context }) {
         })}
       </nav>
 
-      <div className="mt-auto h-[126px] shrink-0 rounded-3xl border border-line bg-surface px-4 py-4">
+      <div className="mt-auto h-[104px] shrink-0 rounded-3xl border border-line bg-surface px-4 py-3">
         <p className="font-mono text-xs uppercase tracking-[0.3em] text-muted">Sesion</p>
-        <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted">
+        <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted">
           Sin base de datos persistente. Los datasets cargados se guardan temporalmente en la sesion.
         </p>
       </div>
