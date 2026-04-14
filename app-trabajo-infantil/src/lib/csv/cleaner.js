@@ -1,5 +1,5 @@
-import { deriveDashboardRecord } from "@/lib/analytics/dashboard-calculations";
-import { normalizeRows } from "@/lib/csv/normalizer";
+import { deriveDashboardRecord } from "../analytics/dashboard-calculations.js";
+import { normalizeRows } from "./normalizer.js";
 
 const DERIVED_COLUMNS = [
   "anio",

@@ -185,7 +185,7 @@ export default function CsvUploadPanel() {
                 <div>
                   <p className="text-sm font-semibold text-foreground">{result.dataset.fileName}</p>
                   <p className="mt-1 text-sm text-muted">
-                    Ano: {result.dataset.detectedYear || "No identificado"} - Filas Pasto: {result.dataset.rowCount} - Columnas: {result.dataset.columnCount}
+                    Estado: {result.dataset.status} - Ano: {result.dataset.detectedYear || "Pendiente"} - Filas Pasto: {result.dataset.rowCount}
                   </p>
                 </div>
                 <StatusPill status={result.dataset.status} />
@@ -200,7 +200,7 @@ export default function CsvUploadPanel() {
                 </ul>
               ) : (
                 <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                  Archivo validado correctamente. Puedes abrirlo desde el listado de datasets.
+                  Archivo recibido. El procesamiento continua en segundo plano y puedes seguir navegando.
                 </p>
               )}
               <div className="flex gap-3">
@@ -217,6 +217,13 @@ export default function CsvUploadPanel() {
                   className="rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
                 >
                   Abrir detalle
+                </button>
+                <button
+                  type="button"
+                  onClick={() => router.push("/procesos")}
+                  className="rounded-2xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:bg-teal-800"
+                >
+                  Ver procesos
                 </button>
               </div>
             </div>

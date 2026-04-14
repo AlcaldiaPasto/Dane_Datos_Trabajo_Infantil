@@ -1,5 +1,5 @@
-import { PRIMARY_YEAR } from "@/lib/constants/year-rules";
-import { formatNumber, formatPercent } from "@/lib/utils/numbers";
+import { PRIMARY_YEAR } from "../constants/year-rules.js";
+import { formatNumber, formatPercent } from "../utils/numbers.js";
 
 export const ALL_FILTER_VALUE = "all";
 

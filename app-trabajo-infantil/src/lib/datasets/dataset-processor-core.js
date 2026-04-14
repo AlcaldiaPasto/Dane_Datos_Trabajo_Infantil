@@ -1,29 +1,17 @@
-import { createHash, randomUUID } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { Worker } from "node:worker_threads";
-import { DATASET_STATUS } from "@/lib/constants/dataset-status";
-import { cleanRows } from "@/lib/csv/cleaner";
-import { buildPastoFilterRule, filterRowsForPasto } from "@/lib/csv/pasto-filter";
-import { parseCsvText } from "@/lib/csv/parser";
-import { validateDatasetStructure } from "@/lib/csv/validator";
-import { detectYearFromFileName, detectYearFromRows } from "@/lib/csv/year-detector";
-import { getDefaultSessionId } from "@/lib/session/session-manager";
-import { getSessionsRoot } from "@/lib/storage/file-store";
+import { DATASET_STATUS } from "../constants/dataset-status.js";
+import { cleanRows } from "../csv/cleaner.js";
+import { buildPastoFilterRule, filterRowsForPasto } from "../csv/pasto-filter.js";
+import { parseCsvText } from "../csv/parser.js";
+import { validateDatasetStructure } from "../csv/validator.js";
+import { detectYearFromFileName, detectYearFromRows } from "../csv/year-detector.js";
 
-function sanitizeFileName(fileName) {
+export function sanitizeFileName(fileName) {
   return String(fileName || "dataset.csv")
     .replace(/[^\w.\- ]+/g, "_")
     .replace(/\s+/g, "_")
     .slice(0, 120);
-}
-
-function isCsvFileName(fileName) {
-  return String(fileName || "").toLowerCase().endsWith(".csv");
-}
-
-function isZipFileName(fileName) {
-  return String(fileName || "").toLowerCase().endsWith(".zip");
 }
 
 function buildRawPreview(headers, rows, limit = 8) {
@@ -37,7 +25,7 @@ function buildRawPreview(headers, rows, limit = 8) {
   };
 }
 
-function buildProcessLog({ now, parsed, validation, detectedYear, status, duplicateOf, archiveInfo, pastoFilter }) {
+export function buildProcessLog({ now, parsed, validation, detectedYear, status, duplicateOf, archiveInfo, pastoFilter }) {
   const log = [
     {
       label: "Archivo recibido",
@@ -58,14 +46,12 @@ function buildProcessLog({ now, parsed, validation, detectedYear, status, duplic
     });
   }
 
-  log.push(
-    {
-      label: "Lectura CSV",
-      note: `Se detectaron ${parsed.sourceRows ?? parsed.rows.length} filas originales, ${parsed.headers.length} columnas y separador '${parsed.delimiter || ","}'.`,
-      status: parsed.errors.length ? "warning" : "complete",
-      createdAt: now,
-    }
-  );
+  log.push({
+    label: "Lectura CSV",
+    note: `Se detectaron ${parsed.sourceRows ?? parsed.rows.length} filas originales, ${parsed.headers.length} columnas y separador '${parsed.delimiter || ","}'.`,
+    status: parsed.errors.length ? "warning" : "complete",
+    createdAt: now,
+  });
 
   if (pastoFilter) {
     log.push({
@@ -100,7 +86,7 @@ function buildProcessLog({ now, parsed, validation, detectedYear, status, duplic
       note: detectedYear ? `Ano detectado: ${detectedYear}.` : "No fue posible detectar el ano.",
       status: detectedYear ? "complete" : "warning",
       createdAt: now,
-    },
+    }
   );
 
   if (duplicateOf) {
@@ -196,7 +182,6 @@ export async function processCsvText({
     ...existingMetadata,
     id: datasetId,
     sourceType: "upload",
-    sessionId: existingMetadata.sessionId || getDefaultSessionId(),
     fileName: safeFileName,
     originalFileName,
     sourceCsvName: sourceCsvName || originalFileName,
@@ -241,114 +226,5 @@ export async function processCsvText({
     statusCode: status === DATASET_STATUS.CLEAN ? 201 : 422,
     dataset: metadata,
     issues,
-  };
-}
-
-function startDatasetProcessingWorker(workerData) {
-  const workerPath = path.join(process.cwd(), "src", "lib", "datasets", "dataset-processing-worker.mjs");
-  const worker = new Worker(workerPath, { workerData });
-
-  worker.on("error", (error) => {
-    console.error("Error en worker de procesamiento de dataset:", error);
-  });
-  worker.unref();
-}
-
-export async function ingestCsvFile(file) {
-  if (!file || typeof file === "string" || typeof file.arrayBuffer !== "function") {
-    return {
-      ok: false,
-      statusCode: 400,
-      error: "No se recibio ningun archivo CSV o ZIP.",
-    };
-  }
-
-  const now = new Date().toISOString();
-  const originalFileName = file.name || "dataset.csv";
-  const safeFileName = sanitizeFileName(originalFileName);
-
-  if (!isCsvFileName(originalFileName) && !isZipFileName(originalFileName)) {
-    return {
-      ok: false,
-      statusCode: 400,
-      error: "El archivo debe tener extension .csv o .zip.",
-    };
-  }
-
-  const datasetId = `upload-${Date.now()}-${randomUUID().slice(0, 8)}`;
-  const sessionId = getDefaultSessionId();
-  const datasetDir = path.join(getSessionsRoot(), sessionId, datasetId);
-  const rawPath = path.join(datasetDir, "raw.csv");
-  const uploadExtension = path.extname(safeFileName).toLowerCase() || ".bin";
-  const uploadPath = path.join(datasetDir, `upload${uploadExtension}`);
-  const metadataPath = path.join(datasetDir, "metadata.json");
-  const uploadBuffer = Buffer.from(await file.arrayBuffer());
-  const sourceContentHash = createHash("sha256").update(uploadBuffer).digest("hex");
-  const metadata = {
-    id: datasetId,
-    sourceType: "upload",
-    sessionId,
-    fileName: safeFileName,
-    originalFileName,
-    sourceCsvName: null,
-    archiveInfo: isZipFileName(originalFileName)
-      ? { isArchive: true, archiveName: originalFileName, sourceCsvName: null }
-      : null,
-    detectedYear: null,
-    yearSource: "pending",
-    isPrimary: false,
-    status: DATASET_STATUS.PROCESSING,
-    readyForAnalysis: false,
-    rowCount: 0,
-    sourceRowCount: 0,
-    columnCount: 0,
-    uploadedAt: now,
-    updatedAt: now,
-    rawPath,
-    uploadPath,
-    cleanPath: null,
-    contentHash: null,
-    sourceContentHash,
-    columns: [],
-    cleanedColumns: [],
-    previewBefore: { headers: [], rows: [] },
-    previewAfter: { headers: [], rows: [] },
-    cleaningRulesApplied: [
-      "Archivo recibido y guardado temporalmente para procesamiento en segundo plano.",
-      "El parseo, validacion, filtro Pasto y limpieza se ejecutan fuera del request de carga.",
-    ],
-    issues: [],
-    processLog: [
-      {
-        label: "Archivo recibido",
-        note: "Se guardo el archivo temporal y se libero la interfaz para seguir navegando.",
-        status: "complete",
-        createdAt: now,
-      },
-      {
-        label: "Procesamiento en segundo plano",
-        note: "El worker validara estructura, leera ZIP si aplica, filtrara Pasto y generara cleaned.json.",
-        status: "processing",
-        createdAt: now,
-      },
-    ],
-  };
-
-  await fs.mkdir(datasetDir, { recursive: true });
-  await fs.writeFile(uploadPath, uploadBuffer);
-  await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2), "utf8");
-  startDatasetProcessingWorker({
-    datasetId,
-    datasetDir,
-    sessionsRoot: getSessionsRoot(),
-    uploadPath,
-    originalFileName,
-  });
-
-  return {
-    ok: true,
-    statusCode: 202,
-    dataset: metadata,
-    issues: [],
   };
 }
