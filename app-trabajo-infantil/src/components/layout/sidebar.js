@@ -10,6 +10,7 @@ const items = [
   { href: "/datasets/nuevo", label: "Subir CSV", shortLabel: "03", icon: "upload", match: "upload" },
   { href: "/comparacion", label: "Comparacion anual", shortLabel: "04", icon: "compare", match: "prefix" },
   { href: "/procesos", label: "Procesos", shortLabel: "05", icon: "process", match: "prefix" },
+  { href: "/sesion/restaurar", label: "Restaurar ZIP", shortLabel: "06", icon: "restore", match: "prefix" },
 ];
 
 function isItemActive(item, pathname) {
@@ -99,6 +100,16 @@ function MenuIcon({ name, className = "h-5 w-5" }) {
         <path d="M12 21a9 9 0 1 0-8.1-5.1" />
         <path d="M4 21v-5h5" />
         <path d="M12 7v5l3 2" />
+      </svg>
+    );
+  }
+
+  if (name === "restore") {
+    return (
+      <svg {...commonProps}>
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+        <path d="M7 10l5 5 5-5" />
+        <path d="M12 15V3" />
       </svg>
     );
   }
@@ -248,7 +259,7 @@ export default function Sidebar({ context }) {
                 <p className="font-mono text-xs uppercase tracking-[0.3em] text-accent">DANE</p>
                 <h1 className="mt-3 text-2xl font-semibold leading-tight text-foreground">Trabajo infantil</h1>
                 <p className="mt-2 text-sm leading-6 text-muted">
-                  Flujo: subir CSV, validar, listar, abrir detalle y comparar Años.
+                  Flujo: subir CSV, validar, listar, abrir detalle y comparar anos.
                 </p>
                 {context?.title ? (
                   <p className="mt-4 text-sm font-semibold leading-5 text-foreground">{context.title}</p>
@@ -317,6 +328,21 @@ export default function Sidebar({ context }) {
             <p className="mt-2 text-sm leading-6 text-muted">
               Sin base de datos persistente. Los datasets cargados se guardan temporalmente en la sesion.
             </p>
+            <div className="mt-3 grid gap-2">
+              <a
+                href="/api/session/export"
+                className="inline-flex h-9 items-center justify-center rounded-2xl bg-teal-700 px-3 text-xs font-bold !text-white shadow-sm transition hover:bg-teal-600"
+              >
+                Descargar ZIP de sesion
+              </a>
+              <Link
+                href="/sesion/restaurar"
+                onClick={closeMobileMenu}
+                className="inline-flex h-9 items-center justify-center rounded-2xl border border-line bg-white px-3 text-xs font-bold text-foreground transition hover:border-accent hover:bg-accent-soft"
+              >
+                Cargar ZIP de sesion
+              </Link>
+            </div>
           </div>
         ) : null}
       </aside>
