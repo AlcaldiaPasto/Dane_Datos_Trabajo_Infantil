@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 
 const items = [
   { href: "/", label: "Dashboard", shortLabel: "01", match: "exact" },
@@ -36,21 +37,59 @@ function getItemClass(isActive) {
   ].join(" ");
 }
 
+function MenuToggle({ isOpen, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-expanded={isOpen}
+      aria-label={isOpen ? "Cerrar menu" : "Abrir menu"}
+      className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-line bg-white text-lg font-semibold text-foreground shadow-sm transition hover:border-accent hover:bg-accent-soft"
+    >
+      {isOpen ? "<" : ">"}
+    </button>
+  );
+}
+
 export default function Sidebar({ context }) {
   const pathname = usePathname();
+  const [isOpen, setIsOpen] = useState(true);
+
+  function toggleMenu() {
+    setIsOpen((currentValue) => !currentValue);
+  }
 
   return (
-    <aside className="relative top-auto flex w-full shrink-0 flex-col overflow-visible border-b border-line bg-[rgba(255,255,255,0.86)] px-4 py-4 backdrop-blur lg:sticky lg:top-0 lg:h-dvh lg:w-72 lg:overflow-y-auto lg:overflow-x-hidden lg:border-r lg:border-b-0 lg:px-5">
-      <div className="mb-3 h-auto min-h-[122px] shrink-0 rounded-3xl border border-line bg-surface-strong px-5 py-4 shadow-sm sm:min-h-[116px] lg:h-[140px]">
-        <p className="font-mono text-xs uppercase tracking-[0.3em] text-accent">DANE</p>
-        <h1 className="mt-2 text-2xl font-semibold leading-tight text-foreground">Trabajo infantil</h1>
-        <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted">
-          Flujo: subir CSV, validar, listar, abrir detalle y comparar anos.
-        </p>
+    <aside
+      className={[
+        "relative top-auto flex w-full shrink-0 flex-col border-b border-line bg-[rgba(255,255,255,0.9)] backdrop-blur transition-all duration-300 lg:sticky lg:top-0 lg:h-dvh lg:border-r lg:border-b-0",
+        isOpen
+          ? "overflow-visible px-4 py-4 lg:w-72 lg:overflow-y-auto lg:overflow-x-hidden lg:px-5"
+          : "overflow-hidden px-3 py-3 lg:w-20 lg:overflow-y-auto lg:overflow-x-hidden",
+      ].join(" ")}
+    >
+      <div
+        className={[
+          "mb-3 flex shrink-0 items-center gap-3 rounded-3xl border border-line bg-surface-strong shadow-sm transition-all",
+          isOpen ? "min-h-[96px] px-5 py-4 sm:min-h-[104px] lg:h-[140px]" : "h-14 px-3 py-2",
+        ].join(" ")}
+      >
+        <div className="min-w-0 flex-1">
+          <p className="font-mono text-xs uppercase tracking-[0.3em] text-accent">DANE</p>
+          {isOpen ? (
+            <>
+              <h1 className="mt-2 text-2xl font-semibold leading-tight text-foreground">Trabajo infantil</h1>
+              <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted">
+                Flujo: subir CSV, validar, listar, abrir detalle y comparar anos.
+              </p>
+            </>
+          ) : null}
+        </div>
+        <MenuToggle isOpen={isOpen} onClick={toggleMenu} />
       </div>
 
-      {context ? (
-        <div className="mb-3 h-auto min-h-[156px] shrink-0 rounded-3xl border border-line bg-slate-950 px-5 py-4 text-white shadow-sm sm:min-h-[136px] lg:h-[176px]">
+      {context && isOpen ? (
+        <div className="mb-3 hidden h-auto min-h-[136px] shrink-0 rounded-3xl border border-line bg-slate-950 px-5 py-4 text-white shadow-sm lg:block lg:h-[176px]">
           <p className="h-4 truncate font-mono text-[11px] uppercase tracking-[0.28em] text-white/55">
             {context.eyebrow}
           </p>
@@ -75,27 +114,34 @@ export default function Sidebar({ context }) {
         </div>
       ) : null}
 
-      <nav className="grid shrink-0 grid-cols-2 gap-2 sm:grid-cols-3 lg:flex lg:flex-col">
+      <nav
+        className={[
+          "shrink-0 gap-2",
+          isOpen ? "grid grid-cols-2 sm:grid-cols-3 lg:flex lg:flex-col" : "hidden lg:flex lg:flex-col",
+        ].join(" ")}
+      >
         {items.map((item) => {
           const isActive = isItemActive(item, pathname);
 
           return (
             <Link key={item.href} href={item.href} className={getItemClass(isActive)}>
-              <span className="truncate text-sm font-semibold">{item.label}</span>
+              <span className="truncate text-sm font-semibold">{isOpen ? item.label : item.shortLabel}</span>
               <span className="font-mono text-xs uppercase tracking-[0.2em] opacity-70">
-                {item.shortLabel}
+                {isOpen ? item.shortLabel : ""}
               </span>
             </Link>
           );
         })}
       </nav>
 
-      <div className="mt-3 hidden h-[104px] shrink-0 rounded-3xl border border-line bg-surface px-4 py-3 lg:mt-auto lg:block">
-        <p className="font-mono text-xs uppercase tracking-[0.3em] text-muted">Sesion</p>
-        <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted">
-          Sin base de datos persistente. Los datasets cargados se guardan temporalmente en la sesion.
-        </p>
-      </div>
+      {isOpen ? (
+        <div className="mt-3 hidden h-[104px] shrink-0 rounded-3xl border border-line bg-surface px-4 py-3 lg:mt-auto lg:block">
+          <p className="font-mono text-xs uppercase tracking-[0.3em] text-muted">Sesion</p>
+          <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted">
+            Sin base de datos persistente. Los datasets cargados se guardan temporalmente en la sesion.
+          </p>
+        </div>
+      ) : null}
     </aside>
   );
 }
