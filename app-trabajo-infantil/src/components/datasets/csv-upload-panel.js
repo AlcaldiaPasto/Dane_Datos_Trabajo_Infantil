@@ -161,7 +161,7 @@ export default function CsvUploadPanel() {
             </div>
             <div className="rounded-[24px] border border-line bg-surface px-5 py-5">
               <dt className="font-mono text-[11px] uppercase tracking-[0.26em] text-muted">
-                Ano detectado
+                Año detectado
               </dt>
               <dd className="mt-3 text-sm font-semibold text-foreground">
                 {file ? detectYearFromName(file.name) : "N/D"}
@@ -185,7 +185,7 @@ export default function CsvUploadPanel() {
                 <div className="min-w-0">
                   <p className="break-all text-sm font-semibold text-foreground">{result.dataset.fileName}</p>
                   <p className="mt-1 text-sm text-muted">
-                    Estado: {result.dataset.status} - Ano: {result.dataset.detectedYear || "Pendiente"} - Filas Pasto: {result.dataset.rowCount}
+                    Estado: {result.dataset.status} - Año: {result.dataset.detectedYear || "Pendiente"} - Filas Pasto: {result.dataset.rowCount}
                   </p>
                 </div>
                 <StatusPill status={result.dataset.status} />

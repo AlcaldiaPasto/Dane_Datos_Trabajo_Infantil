@@ -7,7 +7,7 @@ export default function NewDatasetPage() {
   return (
     <AppShell
       title="Subir nuevo CSV"
-      description="Ingresa un archivo CSV del DANE para validarlo, detectar su ano y registrarlo en la sesion actual del sistema."
+      description="Ingresa un archivo CSV del DANE para validarlo, detectar su Año y registrarlo en la sesion actual del sistema."
       sidebarContext={{
         eyebrow: "Carga de archivo",
         title: "Subir nuevo CSV",

@@ -38,10 +38,18 @@ export default function ComparisonKpis({ items, baseYear, targetYear }) {
               </div>
             </div>
             <div>
-              <div className={`inline-flex rounded-full border px-3 py-1 text-xs font-bold ${directionStyles[item.direction]}`}>
-                {directionIcons[item.direction]} {directionLabels[item.direction]} {item.differenceLabel}
-              </div>
-              <p className="mt-2 text-xs font-semibold text-foreground">Cambio relativo: {item.percentDifferenceLabel}</p>
+              {item.isComparable === false ? (
+                <div className={`inline-flex rounded-full border px-3 py-1 text-xs font-bold ${directionStyles.stable}`}>
+                  N/D No comparable
+                </div>
+              ) : (
+                <div className={`inline-flex rounded-full border px-3 py-1 text-xs font-bold ${directionStyles[item.direction]}`}>
+                  {directionIcons[item.direction]} {directionLabels[item.direction]} {item.differenceLabel}
+                </div>
+              )}
+              <p className="mt-2 text-xs font-semibold text-foreground">
+                Cambio relativo: {item.isComparable === false ? "N/D" : item.percentDifferenceLabel}
+              </p>
               <p className="mt-3 text-sm leading-6 text-muted">{item.note}</p>
             </div>
           </div>

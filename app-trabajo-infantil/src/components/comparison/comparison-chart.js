@@ -4,17 +4,19 @@ import { useMemo } from "react";
 import EChartBase from "@/components/charts/echart-base";
 import Card from "@/components/ui/card";
 
+const CHART_COLORS = ["#0f766e", "#f59e0b", "#2563eb", "#dc2626", "#7c3aed", "#0891b2", "#65a30d"];
+
 export default function ComparisonChart({ snapshot }) {
   const option = useMemo(
     () => ({
-      color: ["#0f766e", "#f59e0b"],
+      color: CHART_COLORS,
       tooltip: {
         trigger: "axis",
         axisPointer: { type: "shadow" },
         backgroundColor: "rgba(15, 23, 42, 0.92)",
         borderWidth: 0,
         textStyle: { color: "#f8fafc" },
-        valueFormatter: (value) => `${value}%`,
+        valueFormatter: (value) => (value === null || value === undefined ? "N/D" : `${value}%`),
       },
       legend: {
         top: 0,
@@ -33,30 +35,21 @@ export default function ComparisonChart({ snapshot }) {
         axisLabel: { formatter: "{value}%", color: "#64748b" },
         splitLine: { lineStyle: { color: "rgba(15,23,42,0.08)" } },
       },
-      series: [
-        {
-          name: String(snapshot.chart.baseYear),
-          type: "bar",
-          data: snapshot.chart.baseValues,
-          barMaxWidth: 42,
-          borderRadius: [10, 10, 0, 0],
-        },
-        {
-          name: String(snapshot.chart.targetYear),
-          type: "bar",
-          data: snapshot.chart.targetValues,
-          barMaxWidth: 42,
-          borderRadius: [10, 10, 0, 0],
-        },
-      ],
+      series: snapshot.chart.series.map((seriesItem) => ({
+        name: seriesItem.name,
+        type: "bar",
+        data: seriesItem.data,
+        barMaxWidth: 42,
+        borderRadius: [10, 10, 0, 0],
+      })),
     }),
     [snapshot]
   );
 
   return (
     <Card
-      title="Comparacion porcentual por indicador"
-      subtitle="Porcentajes calculados solo con datasets limpios y validados."
+      title="Comparacion porcentual de trabajo infantil por indicador"
+      subtitle="Porcentaje de menores en trabajo economico, oficios intensivos y trabajo infantil ampliado por año."
       interactive
     >
       <EChartBase option={option} height={360} />
@@ -66,3 +59,4 @@ export default function ComparisonChart({ snapshot }) {
     </Card>
   );
 }
+

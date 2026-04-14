@@ -2,6 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { Worker } from "node:worker_threads";
+import { detectIndicatorCoverage } from "@/lib/analytics/indicator-coverage";
 import { deriveDashboardRecord } from "@/lib/analytics/dashboard-calculations";
 import { DATASET_STATUS } from "@/lib/constants/dataset-status";
 import { cleanRows } from "@/lib/csv/cleaner";
@@ -97,8 +98,8 @@ function buildProcessLog({ now, parsed, validation, detectedYear, status, duplic
       createdAt: now,
     },
     {
-      label: "Deteccion de ano",
-      note: detectedYear ? `Ano detectado: ${detectedYear}.` : "No fue posible detectar el ano.",
+      label: "Deteccion de año",
+      note: detectedYear ? `Año detectado: ${detectedYear}.` : "No fue posible detectar el año.",
       status: detectedYear ? "complete" : "warning",
       createdAt: now,
     },
@@ -141,6 +142,7 @@ export async function processCsvText({
     sourceRows: parsedSource.rows.length,
   };
   const validation = validateDatasetStructure(parsed.headers, parsed.rows);
+  const indicatorCoverage = detectIndicatorCoverage(parsed.headers);
   const yearFromRows = detectYearFromRows(parsed.headers, parsed.rows);
   const detectedYear = yearFromRows || detectYearFromFileName(sourceCsvName) || detectYearFromFileName(originalFileName);
   const yearSource = yearFromRows ? "column" : detectedYear ? "filename" : "unknown";
@@ -155,16 +157,20 @@ export async function processCsvText({
     ...validation.missingColumns.map((column) => `Falta columna obligatoria: ${column}`),
     ...validation.warnings.slice(0, 50),
     ...pastoFilter.issues,
-    ...(detectedYear ? [] : ["No se pudo detectar el anio desde columna ni nombre de archivo."]),
+    ...(detectedYear ? [] : ["No se pudo detectar el año desde columna ni nombre de archivo."]),
+    ...(!indicatorCoverage.economicWork ? ["Cobertura parcial: faltan columnas de trabajo economico."] : []),
+    ...(!indicatorCoverage.intensiveChores ? ["Cobertura parcial: faltan columnas para oficios intensivos."] : []),
+    ...(!indicatorCoverage.expandedChildLabor ? ["Cobertura parcial: no se puede calcular trabajo infantil ampliado."] : []),
   ];
   const status = validation.isValid ? DATASET_STATUS.CLEAN : DATASET_STATUS.ERROR;
   const preview = buildRawPreview(parsed.headers, parsed.rows);
   const datasetContext = {
     id: datasetId,
     detectedYear,
+    indicatorCoverage,
   };
   const cleanResult = validation.isValid
-    ? cleanRows(parsed.rows, { headers: parsed.headers, dataset: datasetContext })
+    ? cleanRows(parsed.rows, { headers: parsed.headers, dataset: datasetContext, indicatorCoverage })
     : null;
 
   if (cleanResult) {
@@ -222,6 +228,7 @@ export async function processCsvText({
     archiveInfo: archiveInfo || null,
     detectedYear,
     yearSource,
+    indicatorCoverage,
     isPrimary: false,
     status,
     readyForAnalysis: status === DATASET_STATUS.CLEAN,
@@ -247,7 +254,7 @@ export async function processCsvText({
       `Separador CSV detectado automaticamente: ${parsed.delimiter || ","}.`,
       archiveInfo?.isArchive ? `ZIP procesado: se extrajo ${archiveInfo.sourceCsvName} dentro del ZIP.` : null,
       buildPastoFilterRule(pastoFilter.summary),
-      "Deteccion de anio por columna o nombre de archivo.",
+      "Deteccion de año por columna o nombre de archivo.",
       ...(cleanResult?.rules || []),
     ].filter(Boolean),
     issues,

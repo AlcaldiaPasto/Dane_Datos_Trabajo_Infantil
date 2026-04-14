@@ -2,7 +2,7 @@ export function getAvailableFilters() {
   return [
     {
       key: "year",
-      label: "Anio",
+      label: "Año",
       defaultLabel: "2024",
       description: "Base activa por defecto para el dashboard.",
     },

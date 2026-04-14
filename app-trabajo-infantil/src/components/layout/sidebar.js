@@ -248,7 +248,7 @@ export default function Sidebar({ context }) {
                 <p className="font-mono text-xs uppercase tracking-[0.3em] text-accent">DANE</p>
                 <h1 className="mt-3 text-2xl font-semibold leading-tight text-foreground">Trabajo infantil</h1>
                 <p className="mt-2 text-sm leading-6 text-muted">
-                  Flujo: subir CSV, validar, listar, abrir detalle y comparar anos.
+                  Flujo: subir CSV, validar, listar, abrir detalle y comparar Años.
                 </p>
                 {context?.title ? (
                   <p className="mt-4 text-sm font-semibold leading-5 text-foreground">{context.title}</p>

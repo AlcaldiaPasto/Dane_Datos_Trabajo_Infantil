@@ -2,7 +2,7 @@ import Card from "@/components/ui/card";
 
 export default function IssueList({ issues }) {
   return (
-    <Card title="Problemas encontrados" subtitle="Incidencias detectadas durante validacion, deteccion de anio y limpieza.">
+    <Card title="Problemas encontrados" subtitle="Incidencias detectadas durante validacion, deteccion de Año y limpieza.">
       {issues.length ? (
         <ul className="space-y-3 text-sm leading-7 text-muted">
           {issues.map((issue) => (

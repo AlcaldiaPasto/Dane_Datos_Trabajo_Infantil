@@ -1,4 +1,5 @@
 import { deriveDashboardRecord } from "../analytics/dashboard-calculations.js";
+import { detectIndicatorCoverage } from "../analytics/indicator-coverage.js";
 import { normalizeRows } from "./normalizer.js";
 
 const DERIVED_COLUMNS = [
@@ -26,8 +27,15 @@ const CLEANING_RULES = [
   "Se calcula trabajo economico, oficios intensivos y trabajo infantil ampliado.",
 ];
 
-function toAnalysisRow(normalizedRow, dataset, index) {
-  const derived = deriveDashboardRecord(normalizedRow, dataset, index);
+function toAnalysisRow(normalizedRow, dataset, index, indicatorCoverage) {
+  const derived = deriveDashboardRecord(
+    normalizedRow,
+    {
+      ...dataset,
+      indicatorCoverage,
+    },
+    index
+  );
 
   return {
     ...normalizedRow,
@@ -84,13 +92,15 @@ export function buildPreview(headers, rows, limit = 8, width = 10) {
 export function cleanRows(rows, options = {}) {
   const dataset = options.dataset || { id: "dataset", detectedYear: null };
   const rawHeaders = options.headers || [];
+  const indicatorCoverage = options.indicatorCoverage || detectIndicatorCoverage(rawHeaders);
   const normalizedRows = normalizeRows(rows);
-  const cleanedRows = normalizedRows.map((row, index) => toAnalysisRow(row, dataset, index));
+  const cleanedRows = normalizedRows.map((row, index) => toAnalysisRow(row, dataset, index, indicatorCoverage));
   const cleanedHeaders = getOrderedHeaders(cleanedRows, rawHeaders);
 
   return {
     rows: cleanedRows,
     headers: cleanedHeaders,
+    indicatorCoverage,
     preview: buildPreview(cleanedHeaders, cleanedRows),
     rules: CLEANING_RULES,
     issues: [],

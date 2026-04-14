@@ -6,7 +6,7 @@ import FilterPanel from "@/components/dashboard/filter-panel";
 import SummaryTable from "@/components/dashboard/summary-table";
 import BarChart from "@/components/dashboard/charts/bar-chart";
 import PieChart from "@/components/dashboard/charts/pie-chart";
-import LineChart from "@/components/dashboard/charts/line-chart";
+import ColumnChart from "@/components/dashboard/charts/column-chart";
 import {
   buildDashboardSnapshotFromRecords,
   buildFilterOptions,
@@ -74,9 +74,9 @@ function DetailDashboardView({ snapshot }) {
   return (
     <>
       <div className="grid min-w-0 items-stretch gap-5 xl:grid-cols-2">
-        <LineChart
+        <ColumnChart
           title="Distribucion por edad"
-          subtitle="Cantidad de menores por edad dentro del filtro activo."
+          subtitle="Cantidad de menores por edad en grafica de columnas."
           categories={snapshot.ageChart.categories}
           values={snapshot.ageChart.values}
           height={200}

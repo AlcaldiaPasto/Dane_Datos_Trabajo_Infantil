@@ -20,7 +20,7 @@ export default async function DashboardPage() {
         eyebrow: "Panel operativo",
         title: "Dashboard principal",
         description: "Indicadores DANE con filtros, KPI y graficas en tiempo real.",
-        badge: `Anio activo ${defaultFilters.year}`,
+        badge: `Año activo ${defaultFilters.year}`,
       }}
     >
       <DashboardClient records={records} />

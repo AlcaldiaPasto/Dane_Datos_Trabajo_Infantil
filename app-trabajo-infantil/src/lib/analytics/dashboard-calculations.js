@@ -1,5 +1,6 @@
 import { PRIMARY_YEAR } from "../constants/year-rules.js";
 import { formatNumber, formatPercent } from "../utils/numbers.js";
+import { withCoverageFallback } from "./indicator-coverage.js";
 
 export const ALL_FILTER_VALUE = "all";
 
@@ -44,18 +45,25 @@ export function getSituation(studies, economicWork) {
 }
 
 export function deriveDashboardRecord(row, dataset, index = 0) {
-  const economicWork = isEconomicWork(row);
-  const studies = isStudying(row);
-  const domesticHours = getWeeklyDomesticHours(row);
-  const intensiveChores = domesticHours > 14;
-  const expandedChildLabor = economicWork || intensiveChores;
-  const age = Number(row.P6040 || 0) || null;
+  const coverage = withCoverageFallback(dataset);
+  const economicWork = coverage.economicWork ? isEconomicWork(row) : null;
+  const studies = coverage.studies ? isStudying(row) : null;
+  const domesticHours = coverage.domesticHours ? getWeeklyDomesticHours(row) : null;
+  const intensiveChores = coverage.intensiveChores ? domesticHours > 14 : null;
+  const expandedChildLabor = coverage.expandedChildLabor ? Boolean(economicWork || intensiveChores) : null;
+  const age = coverage.age ? Number(row.P6040 || 0) || null : null;
 
   return {
     id: `${dataset.id}-${row.DIRECTORIO || "row"}-${row.ORDEN || index}`,
     datasetId: dataset.id,
     year: dataset.detectedYear || null,
-    sex: row.P3271 === "1" ? "Masculino" : row.P3271 === "2" ? "Femenino" : "No identificado",
+    sex: coverage.sex
+      ? row.P3271 === "1"
+        ? "Masculino"
+        : row.P3271 === "2"
+          ? "Femenino"
+          : "No identificado"
+      : null,
     age,
     works: economicWork,
     studies,
@@ -63,9 +71,13 @@ export function deriveDashboardRecord(row, dataset, index = 0) {
     intensiveChores,
     expandedChildLabor,
     domesticHours,
-    domesticCategory: getDomesticCategory(domesticHours),
-    situation: getSituation(studies, economicWork),
-    riskFinal: expandedChildLabor ? "Trabajo infantil ampliado" : "Sin riesgo ampliado",
+    domesticCategory: coverage.domesticHours ? getDomesticCategory(domesticHours) : null,
+    situation: coverage.situation ? getSituation(studies, economicWork) : null,
+    riskFinal: coverage.riskFinal
+      ? expandedChildLabor
+        ? "Trabajo infantil ampliado"
+        : "Sin riesgo ampliado"
+      : null,
   };
 }
 
@@ -131,6 +143,7 @@ export function applyDashboardFilters(records, filters) {
 function countBy(records, getKey) {
   return records.reduce((accumulator, record) => {
     const key = getKey(record);
+    if (key === null || key === undefined || key === "") return accumulator;
     accumulator[key] = (accumulator[key] || 0) + 1;
     return accumulator;
   }, {});
@@ -144,32 +157,109 @@ function toOrderedItems(counts, orderedLabels) {
 
 function buildDelta(years) {
   return years.length > 1
-    ? { direction: "up", title: "Comparacion anual disponible", message: "Hay mas de un anio limpio listo para comparar." }
+    ? { direction: "up", title: "Comparacion anual disponible", message: "Hay mas de un año limpio listo para comparar." }
     : {
         direction: "stable",
         title: "Comparacion anual no disponible",
-        message: "Solo esta disponible el dataset 2024 limpio; aun no hay otro anio para comparar incremento o disminucion.",
+        message: "Solo esta disponible el dataset 2024 limpio; aun no hay otro año para comparar incremento o disminucion.",
       };
+}
+
+function buildBooleanMetric(records, field) {
+  const validRows = records.filter((record) => typeof record[field] === "boolean");
+  const positiveRows = validRows.filter((record) => record[field]);
+
+  return {
+    available: validRows.length > 0,
+    denominator: validRows.length,
+    total: positiveRows.length,
+    ratio: validRows.length ? positiveRows.length / validRows.length : null,
+  };
+}
+
+function formatKpiPercentValue(metric) {
+  return metric.available && metric.ratio !== null ? formatPercent(metric.ratio, 2) : "N/D";
+}
+
+function formatKpiMetricNote(metric, availableMessage, missingMessage) {
+  if (!metric.available) {
+    return missingMessage;
+  }
+
+  return availableMessage(metric.total);
+}
+
+function buildSummaryMetric(metric, unavailableTrend, availableTrend) {
+  if (!metric.available) {
+    return {
+      value: "N/D",
+      support: "No comparable",
+      trend: unavailableTrend,
+    };
+  }
+
+  return {
+    value: formatNumber(metric.total),
+    support: formatPercent(metric.ratio || 0, 2),
+    trend: availableTrend,
+  };
 }
 
 export function buildDashboardSnapshotFromRecords(records, filters) {
   const filteredRecords = applyDashboardFilters(records, filters);
   const totalChildren = filteredRecords.length;
-  const economicWorkTotal = filteredRecords.filter((record) => record.economicWork).length;
-  const intensiveChoresTotal = filteredRecords.filter((record) => record.intensiveChores).length;
-  const expandedChildLaborTotal = filteredRecords.filter((record) => record.expandedChildLabor).length;
+  const economicWorkMetric = buildBooleanMetric(filteredRecords, "economicWork");
+  const intensiveChoresMetric = buildBooleanMetric(filteredRecords, "intensiveChores");
+  const expandedChildLaborMetric = buildBooleanMetric(filteredRecords, "expandedChildLabor");
   const years = uniqueSorted(records.map((record) => record.year), (left, right) => left - right);
   const primaryYear = filters.year === ALL_FILTER_VALUE ? PRIMARY_YEAR : filters.year;
 
-  const situationCounts = countBy(filteredRecords, (record) => record.situation);
-  const domesticCounts = countBy(filteredRecords, (record) => record.domesticCategory);
-  const ageCounts = countBy(filteredRecords, (record) => record.age || "Sin edad");
-  const sexCounts = countBy(filteredRecords, (record) => record.sex);
+  const situationCounts = countBy(
+    filteredRecords.filter((record) => typeof record.situation === "string"),
+    (record) => record.situation
+  );
+  const domesticCounts = countBy(
+    filteredRecords.filter((record) => typeof record.domesticCategory === "string"),
+    (record) => record.domesticCategory
+  );
+  const ageCounts = countBy(
+    filteredRecords.filter((record) => Number.isFinite(Number(record.age))),
+    (record) => Number(record.age)
+  );
+  const sexCounts = countBy(
+    filteredRecords.filter((record) => typeof record.sex === "string"),
+    (record) => record.sex
+  );
   const comparisonState = buildDelta(years);
+
+  const economicSummary = buildSummaryMetric(
+    economicWorkMetric,
+    "No disponible para este dataset por ausencia de columnas de trabajo economico.",
+    "Recalculado con filtros"
+  );
+  const intensiveSummary = buildSummaryMetric(
+    intensiveChoresMetric,
+    "No disponible para este dataset por ausencia de columnas de oficios del hogar.",
+    "15 horas o mas por semana"
+  );
+  const expandedSummary = buildSummaryMetric(
+    expandedChildLaborMetric,
+    "No disponible para este dataset por cobertura parcial de trabajo ampliado.",
+    "Trabajo economico u oficios intensivos"
+  );
 
   return {
     primaryYear,
     filteredTotal: totalChildren,
+    dataCoverage: {
+      economicWork: economicWorkMetric.available,
+      intensiveChores: intensiveChoresMetric.available,
+      expandedChildLabor: expandedChildLaborMetric.available,
+      situation: Object.keys(situationCounts).length > 0,
+      domesticDistribution: Object.keys(domesticCounts).length > 0,
+      ageDistribution: Object.keys(ageCounts).length > 0,
+      sexDistribution: Object.keys(sexCounts).length > 0,
+    },
     kpis: [
       {
         label: "Total de menores",
@@ -179,21 +269,45 @@ export function buildDashboardSnapshotFromRecords(records, filters) {
       },
       {
         label: "Pct Trabajo Economico",
-        value: formatPercent(totalChildren ? economicWorkTotal / totalChildren : 0, 2),
-        note: `${formatNumber(economicWorkTotal)} menores con trabajo economico.`,
-        delta: { direction: "up", label: "Total", value: formatNumber(economicWorkTotal) },
+        value: formatKpiPercentValue(economicWorkMetric),
+        note: formatKpiMetricNote(
+          economicWorkMetric,
+          (total) => `${formatNumber(total)} menores con trabajo economico.`,
+          "No disponible: faltan columnas para trabajo economico."
+        ),
+        delta: {
+          direction: economicWorkMetric.available ? "up" : "stable",
+          label: "Total",
+          value: economicWorkMetric.available ? formatNumber(economicWorkMetric.total) : "N/D",
+        },
       },
       {
         label: "Pct Oficios Intensivos",
-        value: formatPercent(totalChildren ? intensiveChoresTotal / totalChildren : 0, 2),
-        note: `${formatNumber(intensiveChoresTotal)} menores con 15 horas o mas.`,
-        delta: { direction: "up", label: "Total", value: formatNumber(intensiveChoresTotal) },
+        value: formatKpiPercentValue(intensiveChoresMetric),
+        note: formatKpiMetricNote(
+          intensiveChoresMetric,
+          (total) => `${formatNumber(total)} menores con 15 horas o mas.`,
+          "No disponible: faltan columnas de oficios del hogar."
+        ),
+        delta: {
+          direction: intensiveChoresMetric.available ? "up" : "stable",
+          label: "Total",
+          value: intensiveChoresMetric.available ? formatNumber(intensiveChoresMetric.total) : "N/D",
+        },
       },
       {
         label: "Pct Trabajo Ampliado",
-        value: formatPercent(totalChildren ? expandedChildLaborTotal / totalChildren : 0, 2),
-        note: `${formatNumber(expandedChildLaborTotal)} menores en riesgo ampliado.`,
-        delta: { direction: "up", label: "Total", value: formatNumber(expandedChildLaborTotal) },
+        value: formatKpiPercentValue(expandedChildLaborMetric),
+        note: formatKpiMetricNote(
+          expandedChildLaborMetric,
+          (total) => `${formatNumber(total)} menores en riesgo ampliado.`,
+          "No disponible: el dataset no permite calcular trabajo ampliado."
+        ),
+        delta: {
+          direction: expandedChildLaborMetric.available ? "up" : "stable",
+          label: "Total",
+          value: expandedChildLaborMetric.available ? formatNumber(expandedChildLaborMetric.total) : "N/D",
+        },
       },
     ],
     situationChart: {
@@ -218,27 +332,27 @@ export function buildDashboardSnapshotFromRecords(records, filters) {
     summaryRows: [
       {
         metric: "Trabajo economico",
-        value: formatNumber(economicWorkTotal),
-        support: formatPercent(totalChildren ? economicWorkTotal / totalChildren : 0, 2),
-        trend: "Recalculado con filtros",
+        value: economicSummary.value,
+        support: economicSummary.support,
+        trend: economicSummary.trend,
       },
       {
         metric: "Oficios intensivos",
-        value: formatNumber(intensiveChoresTotal),
-        support: formatPercent(totalChildren ? intensiveChoresTotal / totalChildren : 0, 2),
-        trend: "15 horas o mas por semana",
+        value: intensiveSummary.value,
+        support: intensiveSummary.support,
+        trend: intensiveSummary.trend,
       },
       {
         metric: "Trabajo infantil ampliado",
-        value: formatNumber(expandedChildLaborTotal),
-        support: formatPercent(totalChildren ? expandedChildLaborTotal / totalChildren : 0, 2),
-        trend: "Trabajo economico u oficios intensivos",
+        value: expandedSummary.value,
+        support: expandedSummary.support,
+        trend: expandedSummary.trend,
       },
       {
         metric: "Sexo con mayor frecuencia",
         value:
           Object.entries(sexCounts).sort((left, right) => right[1] - left[1])[0]?.[0] ||
-          "Sin registros",
+          "No disponible",
         support: formatNumber(Object.entries(sexCounts).sort((left, right) => right[1] - left[1])[0]?.[1] || 0),
         trend: "Segun filtro activo",
       },
@@ -251,3 +365,4 @@ export function buildDashboardSnapshotFromRecords(records, filters) {
     },
   };
 }
+

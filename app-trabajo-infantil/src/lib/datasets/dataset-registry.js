@@ -1,4 +1,5 @@
 import { promises as fs } from "node:fs";
+import { detectIndicatorCoverage } from "@/lib/analytics/indicator-coverage";
 import { cleanRows } from "@/lib/csv/cleaner";
 import { buildPastoFilterRule, filterRowsForPasto } from "@/lib/csv/pasto-filter";
 import { parseCsvText } from "@/lib/csv/parser";
@@ -34,13 +35,16 @@ async function loadBaseDataset() {
   const metadata = await readJson(getBaseDatasetMetadataPath());
   const csvPath = getBaseDatasetCsvPath();
   const snapshot = await readCsvSnapshot(csvPath);
+  const indicatorCoverage = detectIndicatorCoverage(snapshot.totalHeaders);
   const cleanResult = cleanRows(snapshot.rawRows, {
     headers: snapshot.totalHeaders,
-    dataset: metadata,
+    dataset: { ...metadata, indicatorCoverage },
+    indicatorCoverage,
   });
 
   return {
     ...metadata,
+    indicatorCoverage,
     rowCount: snapshot.totalRows,
     sourceRowCount: snapshot.sourceRows,
     columnCount: snapshot.totalHeaders.length,

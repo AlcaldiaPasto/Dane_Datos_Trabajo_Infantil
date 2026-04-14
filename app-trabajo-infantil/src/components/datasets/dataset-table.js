@@ -18,7 +18,7 @@ export default function DatasetTable({ datasets }) {
                 Archivo
               </th>
               <th className="px-5 py-4 font-mono text-[11px] uppercase tracking-[0.24em] text-muted">
-                Ano
+                Año
               </th>
               <th className="px-5 py-4 font-mono text-[11px] uppercase tracking-[0.24em] text-muted">
                 Estado

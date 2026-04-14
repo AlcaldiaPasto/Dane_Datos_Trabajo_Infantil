@@ -114,7 +114,7 @@ export default function FilterPanel({
 
         <div className="grid gap-3 xl:grid-cols-2">
           <FilterSelect
-            label="Anio"
+            label="Año"
             value={filters.year}
             options={options.years}
             onChange={(value) => onChange("year", value)}
