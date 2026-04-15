@@ -259,6 +259,22 @@ export function buildDashboardSnapshotFromRecords(records, filters) {
     (record) => record.sex
   );
   const comparisonState = buildDelta(years);
+  const hasSituationCoverage = Object.keys(situationCounts).length > 0;
+  const fallbackSituationChart =
+    economicWorkMetric.available
+      ? {
+          categories: ["Trabaja (economico)", "No trabaja (economico)"],
+          values: [
+            economicWorkMetric.total,
+            Math.max(economicWorkMetric.denominator - economicWorkMetric.total, 0),
+          ],
+          usingFallback: true,
+        }
+      : {
+          categories: ["Sin datos comparables"],
+          values: [0],
+          usingFallback: false,
+        };
 
   const economicSummary = buildSummaryMetric(
     economicWorkMetric,
@@ -283,7 +299,7 @@ export function buildDashboardSnapshotFromRecords(records, filters) {
       economicWork: economicWorkMetric.available,
       intensiveChores: intensiveChoresMetric.available,
       expandedChildLabor: expandedChildLaborMetric.available,
-      situation: Object.keys(situationCounts).length > 0,
+      situation: hasSituationCoverage || fallbackSituationChart.usingFallback,
       domesticDistribution: Object.keys(domesticCounts).length > 0,
       ageDistribution: Object.keys(ageCounts).length > 0,
       sexDistribution: Object.keys(sexCounts).length > 0,
@@ -339,10 +355,19 @@ export function buildDashboardSnapshotFromRecords(records, filters) {
       },
     ],
     situationChart: {
-      categories: ["Solo estudia", "No estudia", "Estudia y trabaja", "Solo trabaja"],
-      values: ["Solo estudia", "No estudia", "Estudia y trabaja", "Solo trabaja"].map(
-        (label) => situationCounts[label] || 0
-      ),
+      categories: hasSituationCoverage
+        ? ["Solo estudia", "No estudia", "Estudia y trabaja", "Solo trabaja"]
+        : fallbackSituationChart.categories,
+      values: hasSituationCoverage
+        ? ["Solo estudia", "No estudia", "Estudia y trabaja", "Solo trabaja"].map(
+            (label) => situationCounts[label] || 0
+          )
+        : fallbackSituationChart.values,
+      fallbackNote: hasSituationCoverage
+        ? null
+        : fallbackSituationChart.usingFallback
+          ? "Vista estimada con trabajo economico por falta de columnas de estudio/situacion."
+          : "No hay columnas comparables para situacion principal en este dataset.",
     },
     domesticDonut: toOrderedItems(domesticCounts, [
       "Sin oficios",
