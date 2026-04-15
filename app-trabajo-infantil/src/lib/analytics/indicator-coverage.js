@@ -2,6 +2,7 @@ import { normalizeColumnName } from "../csv/normalizer.js";
 
 const ECONOMIC_WORK_COLUMNS = ["P400", "P401", "P402", "P403"];
 const STUDIES_COLUMNS = ["P6160", "P6170"];
+const LEGACY_STUDY_PROXY_COLUMNS = ["P400"];
 const AGE_COLUMNS = ["P6040"];
 const SEX_COLUMNS = ["P3271"];
 
@@ -107,12 +108,16 @@ export function detectIndicatorCoverage(headers = [], rows = []) {
   const ageFromHeaders = hasAnyColumn(headerSet, AGE_COLUMNS);
   const sexFromHeaders = hasAnyColumn(headerSet, SEX_COLUMNS);
   const studiesFromHeaders = hasAnyColumn(headerSet, STUDIES_COLUMNS);
+  const legacyStudyProxyFromHeaders = hasAnyColumn(headerSet, LEGACY_STUDY_PROXY_COLUMNS);
   const economicFromHeaders = hasAnyColumn(headerSet, ECONOMIC_WORK_COLUMNS);
   const domesticFromHeaders = hasAnyColumn(headerSet, DOMESTIC_HOUR_COLUMNS);
 
   const age = hasRows ? ageFromHeaders && hasAgeCoverage(rows) : ageFromHeaders;
   const sex = hasRows ? sexFromHeaders && hasSexCoverage(rows) : sexFromHeaders;
   const studies = hasRows ? studiesFromHeaders && hasNonEmptyValue(rows, STUDIES_COLUMNS) : studiesFromHeaders;
+  const legacyStudyProxy = hasRows
+    ? legacyStudyProxyFromHeaders && hasNonEmptyValue(rows, LEGACY_STUDY_PROXY_COLUMNS)
+    : legacyStudyProxyFromHeaders;
   const economicWork = hasRows
     ? economicFromHeaders && hasNonEmptyValue(rows, ECONOMIC_WORK_COLUMNS)
     : economicFromHeaders;
@@ -125,11 +130,12 @@ export function detectIndicatorCoverage(headers = [], rows = []) {
     age,
     sex,
     studies,
+    legacyStudyProxy,
     economicWork,
     domesticHours,
     intensiveChores,
     expandedChildLabor,
-    situation: studies && economicWork,
+    situation: (studies || legacyStudyProxy) && economicWork,
     riskFinal: expandedChildLabor,
   };
 }

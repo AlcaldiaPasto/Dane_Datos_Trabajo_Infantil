@@ -72,7 +72,11 @@ export function getSituation(studies, economicWork) {
 export function deriveDashboardRecord(row, dataset, index = 0) {
   const coverage = withCoverageFallback(dataset);
   const economicWork = coverage.economicWork ? isEconomicWork(row) : null;
-  const studies = coverage.studies ? isStudying(row) : null;
+  const studies = coverage.studies
+    ? isStudying(row)
+    : coverage.legacyStudyProxy
+      ? row.P400 === "3"
+      : null;
   const domesticHours = coverage.domesticHours ? getWeeklyDomesticHours(row) : null;
   const intensiveChores = coverage.intensiveChores && domesticHours !== null ? domesticHours > 14 : null;
   const expandedChildLabor =
@@ -100,7 +104,10 @@ export function deriveDashboardRecord(row, dataset, index = 0) {
     expandedChildLabor,
     domesticHours,
     domesticCategory: coverage.domesticHours && domesticHours !== null ? getDomesticCategory(domesticHours) : null,
-    situation: coverage.situation && studies !== null && economicWork !== null ? getSituation(studies, economicWork) : null,
+    situation:
+      coverage.situation && studies !== null && economicWork !== null
+        ? getSituation(studies, economicWork)
+        : null,
     riskFinal: coverage.riskFinal
       ? expandedChildLabor === null
         ? null
@@ -259,22 +266,6 @@ export function buildDashboardSnapshotFromRecords(records, filters) {
     (record) => record.sex
   );
   const comparisonState = buildDelta(years);
-  const hasSituationCoverage = Object.keys(situationCounts).length > 0;
-  const fallbackSituationChart =
-    economicWorkMetric.available
-      ? {
-          categories: ["Trabaja (economico)", "No trabaja (economico)"],
-          values: [
-            economicWorkMetric.total,
-            Math.max(economicWorkMetric.denominator - economicWorkMetric.total, 0),
-          ],
-          usingFallback: true,
-        }
-      : {
-          categories: ["Sin datos comparables"],
-          values: [0],
-          usingFallback: false,
-        };
 
   const economicSummary = buildSummaryMetric(
     economicWorkMetric,
@@ -299,7 +290,7 @@ export function buildDashboardSnapshotFromRecords(records, filters) {
       economicWork: economicWorkMetric.available,
       intensiveChores: intensiveChoresMetric.available,
       expandedChildLabor: expandedChildLaborMetric.available,
-      situation: hasSituationCoverage || fallbackSituationChart.usingFallback,
+      situation: Object.keys(situationCounts).length > 0,
       domesticDistribution: Object.keys(domesticCounts).length > 0,
       ageDistribution: Object.keys(ageCounts).length > 0,
       sexDistribution: Object.keys(sexCounts).length > 0,
@@ -355,19 +346,10 @@ export function buildDashboardSnapshotFromRecords(records, filters) {
       },
     ],
     situationChart: {
-      categories: hasSituationCoverage
-        ? ["Solo estudia", "No estudia", "Estudia y trabaja", "Solo trabaja"]
-        : fallbackSituationChart.categories,
-      values: hasSituationCoverage
-        ? ["Solo estudia", "No estudia", "Estudia y trabaja", "Solo trabaja"].map(
-            (label) => situationCounts[label] || 0
-          )
-        : fallbackSituationChart.values,
-      fallbackNote: hasSituationCoverage
-        ? null
-        : fallbackSituationChart.usingFallback
-          ? "Vista estimada con trabajo economico por falta de columnas de estudio/situacion."
-          : "No hay columnas comparables para situacion principal en este dataset.",
+      categories: ["Solo estudia", "No estudia", "Estudia y trabaja", "Solo trabaja"],
+      values: ["Solo estudia", "No estudia", "Estudia y trabaja", "Solo trabaja"].map(
+        (label) => situationCounts[label] || 0
+      ),
     },
     domesticDonut: toOrderedItems(domesticCounts, [
       "Sin oficios",

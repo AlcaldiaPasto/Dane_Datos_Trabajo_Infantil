@@ -68,15 +68,11 @@ function DashboardAnalyticsFrame({
 }
 
 function PrimaryDashboardView({ snapshot }) {
-  const situationSubtitle = snapshot.situationChart.fallbackNote
-    ? `Recuento compacto por actividad principal. ${snapshot.situationChart.fallbackNote}`
-    : "Recuento compacto por actividad principal. Se actualiza con filtros.";
-
   return (
     <>
       <BarChart
         title="Situacion principal del menor"
-        subtitle={situationSubtitle}
+        subtitle="Recuento compacto por actividad principal. Se actualiza con filtros."
         categories={snapshot.situationChart.categories}
         values={snapshot.situationChart.values}
         height={190}
