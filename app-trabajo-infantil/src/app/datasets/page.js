@@ -1,20 +1,13 @@
 import AppShell from "@/components/layout/app-shell";
-import DatasetTable from "@/components/datasets/dataset-table";
-import DatasetUploadForm from "@/components/datasets/dataset-upload-form";
-import DatasetStatusList from "@/components/datasets/dataset-status-list";
-import { buildDatasetStatusSummary } from "@/lib/analytics/summary-service";
-import { listDatasets } from "@/lib/datasets/dataset-service";
+import DatasetsIndexedDbPage from "@/components/datasets/datasets-indexeddb-page";
 
 export const dynamic = "force-dynamic";
 
-export default async function DatasetsPage() {
-  const datasets = await listDatasets();
-  const statusSummary = buildDatasetStatusSummary(datasets);
-
+export default function DatasetsPage() {
   return (
     <AppShell
       title="Gestion de datasets"
-      description="Panel administrativo para revisar archivos cargados, estado de procesamiento, Año detectado, volumen y acceso al detalle."
+      description="Panel administrativo para revisar archivos cargados, estado de procesamiento, Ano detectado, volumen y acceso al detalle."
       sidebarContext={{
         eyebrow: "Panel administrativo",
         title: "Gestion de datasets",
@@ -23,13 +16,8 @@ export default async function DatasetsPage() {
         actionHref: "/datasets/nuevo",
       }}
     >
-      <div className="flex min-h-full min-w-0 flex-col gap-5 sm:gap-6">
-        <DatasetStatusList statusSummary={statusSummary} />
-        <DatasetUploadForm />
-        <div className="min-h-0 min-w-0 flex-1">
-          <DatasetTable datasets={datasets} />
-        </div>
-      </div>
+      <DatasetsIndexedDbPage />
     </AppShell>
   );
 }
+

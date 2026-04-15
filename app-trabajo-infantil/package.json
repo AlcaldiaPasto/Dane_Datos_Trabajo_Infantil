@@ -11,6 +11,8 @@
     "test": "node --test tests/*.test.mjs"
   },
   "dependencies": {
+    "dexie": "^4.4.2",
+    "dexie-react-hooks": "^4.4.0",
     "echarts": "^6.0.0",
     "echarts-for-react": "^3.0.6",
     "jszip": "^3.10.1",

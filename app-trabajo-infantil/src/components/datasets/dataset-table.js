@@ -38,28 +38,36 @@ export default function DatasetTable({ datasets }) {
             </tr>
           </thead>
           <tbody>
-            {datasets.map((dataset) => (
-              <tr key={dataset.id} className="border-b border-line transition hover:bg-slate-50/80">
-                <td className="px-5 py-5">
-                  <div className="flex flex-col">
-                    <span className="break-all text-sm font-semibold text-foreground">{dataset.fileName}</span>
-                    <span className="mt-1 text-xs text-muted">
-                      {dataset.isPrimary ? "Dataset principal por defecto" : "Dataset cargado en sesion"}
-                    </span>
-                  </div>
-                </td>
-                <td className="px-5 py-5 text-sm font-semibold text-foreground">{dataset.displayYear}</td>
-                <td className="px-5 py-5">
-                  <StatusPill status={dataset.status} />
-                </td>
-                <td className="px-5 py-5 font-mono text-sm text-foreground">{dataset.rowCount}</td>
-                <td className="px-5 py-5 font-mono text-sm text-foreground">{dataset.columnCount}</td>
-                <td className="px-5 py-5 text-sm text-muted">{dataset.uploadedAtLabel}</td>
-                <td className="px-5 py-5">
-                  <DatasetActions dataset={dataset} />
+            {datasets.length ? (
+              datasets.map((dataset) => (
+                <tr key={dataset.id} className="border-b border-line transition hover:bg-slate-50/80">
+                  <td className="px-5 py-5">
+                    <div className="flex flex-col">
+                      <span className="break-all text-sm font-semibold text-foreground">{dataset.fileName}</span>
+                      <span className="mt-1 text-xs text-muted">
+                        {dataset.isPrimary ? "Dataset principal por defecto" : "Dataset cargado en sesion"}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-5 py-5 text-sm font-semibold text-foreground">{dataset.displayYear}</td>
+                  <td className="px-5 py-5">
+                    <StatusPill status={dataset.status} />
+                  </td>
+                  <td className="px-5 py-5 font-mono text-sm text-foreground">{dataset.rowCount}</td>
+                  <td className="px-5 py-5 font-mono text-sm text-foreground">{dataset.columnCount}</td>
+                  <td className="px-5 py-5 text-sm text-muted">{dataset.uploadedAtLabel}</td>
+                  <td className="px-5 py-5">
+                    <DatasetActions dataset={dataset} />
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={7} className="px-5 py-8 text-center text-sm text-muted">
+                  No hay datasets en almacenamiento local. Sube un CSV para iniciar el analisis.
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>

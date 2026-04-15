@@ -23,18 +23,14 @@ function FilterSelect({ label, value, options, onChange }) {
 }
 
 function ViewSwitcher({ page, onPageChange }) {
-  if (typeof page !== "number" || !onPageChange) {
-    return null;
-  }
+  if (typeof page !== "number" || !onPageChange) return null;
 
   const isFirstPage = page === 0;
 
   return (
     <div className="flex items-center justify-between rounded-[22px] border border-line bg-white px-4 py-3">
       <div>
-        <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-muted">
-          Vista {page + 1} de 2
-        </p>
+        <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-muted">Vista {page + 1} de 2</p>
         <p className="mt-1 text-sm font-semibold text-foreground">
           {isFirstPage ? "Graficas principales" : "Detalle analitico"}
         </p>
@@ -66,9 +62,9 @@ export default function FilterPanel({
   filteredTotal,
   page,
   onPageChange,
+  onExportJson,
+  onExportCsv,
 }) {
-  const exportQuery = new URLSearchParams(filters).toString();
-
   return (
     <Card
       title="Panel de filtros"
@@ -80,9 +76,7 @@ export default function FilterPanel({
         <ViewSwitcher page={page} onPageChange={onPageChange} />
 
         <div className="rounded-[22px] border border-line bg-slate-950 px-5 py-3 text-white">
-          <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-white/60">
-            Registros filtrados
-          </p>
+          <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-white/60">Registros filtrados</p>
           <div className="mt-2 flex items-end justify-between gap-4">
             <div>
               <p className="text-2xl font-semibold tracking-tight">{filteredTotal}</p>
@@ -97,40 +91,27 @@ export default function FilterPanel({
             </button>
           </div>
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            <a
-              href={`/api/dashboard/export?format=json&${exportQuery}`}
+            <button
+              type="button"
+              onClick={onExportJson}
               className="inline-flex h-9 items-center justify-center rounded-full bg-white/10 px-3 text-xs font-bold text-white/85 transition hover:bg-white/20"
             >
               Resumen JSON
-            </a>
-            <a
-              href={`/api/dashboard/export?format=csv&${exportQuery}`}
+            </button>
+            <button
+              type="button"
+              onClick={onExportCsv}
               className="inline-flex h-9 items-center justify-center rounded-full bg-white/10 px-3 text-xs font-bold text-white/85 transition hover:bg-white/20"
             >
               Tabla CSV
-            </a>
+            </button>
           </div>
         </div>
 
         <div className="grid gap-3 xl:grid-cols-2">
-          <FilterSelect
-            label="Año"
-            value={filters.year}
-            options={options.years}
-            onChange={(value) => onChange("year", value)}
-          />
-          <FilterSelect
-            label="Sexo"
-            value={filters.sex}
-            options={options.sex}
-            onChange={(value) => onChange("sex", value)}
-          />
-          <FilterSelect
-            label="Edad"
-            value={filters.age}
-            options={options.ages}
-            onChange={(value) => onChange("age", value)}
-          />
+          <FilterSelect label="Ano" value={filters.year} options={options.years} onChange={(value) => onChange("year", value)} />
+          <FilterSelect label="Sexo" value={filters.sex} options={options.sex} onChange={(value) => onChange("sex", value)} />
+          <FilterSelect label="Edad" value={filters.age} options={options.ages} onChange={(value) => onChange("age", value)} />
           <FilterSelect
             label="Trabaja"
             value={filters.works}
@@ -154,3 +135,4 @@ export default function FilterPanel({
     </Card>
   );
 }
+

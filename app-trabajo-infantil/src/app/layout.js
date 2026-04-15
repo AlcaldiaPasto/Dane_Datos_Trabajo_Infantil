@@ -1,4 +1,5 @@
 import { IBM_Plex_Mono, Manrope } from "next/font/google";
+import IndexedDbBootstrap from "@/components/providers/indexeddb-bootstrap";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -20,7 +21,10 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="es" className={`${manrope.variable} ${plexMono.variable}`}>
-      <body>{children}</body>
+      <body>
+        <IndexedDbBootstrap />
+        {children}
+      </body>
     </html>
   );
 }

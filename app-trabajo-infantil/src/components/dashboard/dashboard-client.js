@@ -1,5 +1,6 @@
 "use client";
 
+import Papa from "papaparse";
 import { useMemo, useState } from "react";
 import KpiCard from "@/components/dashboard/kpi-card";
 import FilterPanel from "@/components/dashboard/filter-panel";
@@ -8,10 +9,23 @@ import BarChart from "@/components/dashboard/charts/bar-chart";
 import PieChart from "@/components/dashboard/charts/pie-chart";
 import ColumnChart from "@/components/dashboard/charts/column-chart";
 import {
+  applyDashboardFilters,
   buildDashboardSnapshotFromRecords,
   buildFilterOptions,
   getDefaultFilters,
 } from "@/lib/analytics/dashboard-calculations";
+
+function downloadBlobFile(fileName, mimeType, content) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
 
 function KpiGrid({ kpis }) {
   return (
@@ -29,6 +43,8 @@ function DashboardAnalyticsFrame({
   filteredTotal,
   onFilterChange,
   onReset,
+  onExportJson,
+  onExportCsv,
   page,
   onPageChange,
   children,
@@ -41,10 +57,11 @@ function DashboardAnalyticsFrame({
         filteredTotal={filteredTotal}
         onChange={onFilterChange}
         onReset={onReset}
+        onExportJson={onExportJson}
+        onExportCsv={onExportCsv}
         page={page}
         onPageChange={onPageChange}
       />
-
       <div className="grid min-w-0 gap-5">{children}</div>
     </section>
   );
@@ -98,10 +115,9 @@ export default function DashboardClient({ records }) {
   const filterOptions = useMemo(() => buildFilterOptions(records), [records]);
   const [filters, setFilters] = useState(defaultFilters);
   const [page, setPage] = useState(0);
-  const snapshot = useMemo(
-    () => buildDashboardSnapshotFromRecords(records, filters),
-    [filters, records]
-  );
+
+  const filteredRecords = useMemo(() => applyDashboardFilters(records, filters), [records, filters]);
+  const snapshot = useMemo(() => buildDashboardSnapshotFromRecords(records, filters), [filters, records]);
 
   function handleFilterChange(key, value) {
     setFilters((currentFilters) => ({
@@ -114,16 +130,47 @@ export default function DashboardClient({ records }) {
     setFilters(defaultFilters);
   }
 
+  function handleExportSummaryJson() {
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      scope: "dashboard-local-indexeddb",
+      filters,
+      snapshot,
+    };
+    downloadBlobFile("dashboard-resumen.json", "application/json;charset=utf-8;", JSON.stringify(payload, null, 2));
+  }
+
+  function handleExportTableCsv() {
+    const rows = filteredRecords.map((record) => ({
+      datasetId: record.datasetId,
+      anio: record.year,
+      sexo: record.sex,
+      edad: record.age,
+      trabaja: record.works,
+      estudia: record.studies,
+      trabajoEconomico: record.economicWork,
+      oficiosIntensivos: record.intensiveChores,
+      trabajoInfantilAmpliado: record.expandedChildLabor,
+      horasOficiosHogar: record.domesticHours,
+      clasificacionCargaDomestica: record.domesticCategory,
+      situacionPrincipal: record.situation,
+      riesgoFinal: record.riskFinal,
+    }));
+    const csv = Papa.unparse(rows);
+    downloadBlobFile("dashboard-tabla-filtrada.csv", "text/csv;charset=utf-8;", csv);
+  }
+
   return (
     <div className="flex min-h-full min-w-0 flex-col">
       <KpiGrid kpis={snapshot.kpis} />
-
       <DashboardAnalyticsFrame
         filters={filters}
         filterOptions={filterOptions}
         filteredTotal={snapshot.filteredTotal}
         onFilterChange={handleFilterChange}
         onReset={handleReset}
+        onExportJson={handleExportSummaryJson}
+        onExportCsv={handleExportTableCsv}
         page={page}
         onPageChange={setPage}
       >
@@ -132,3 +179,4 @@ export default function DashboardClient({ records }) {
     </div>
   );
 }
+

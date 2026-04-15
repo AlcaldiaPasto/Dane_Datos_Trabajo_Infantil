@@ -326,7 +326,7 @@ export default function Sidebar({ context }) {
           <div className="mt-3 hidden min-h-[104px] shrink-0 rounded-3xl border border-line bg-surface px-4 py-3 lg:mt-auto lg:block">
             <p className="font-mono text-xs uppercase tracking-[0.3em] text-muted">Sesion</p>
             <p className="mt-2 text-sm leading-6 text-muted">
-              Sin base de datos persistente. Los datasets cargados se guardan temporalmente en la sesion.
+              Los datasets se guardan localmente en este navegador usando IndexedDB.
             </p>
             <div className="mt-3 grid gap-2">
               <a

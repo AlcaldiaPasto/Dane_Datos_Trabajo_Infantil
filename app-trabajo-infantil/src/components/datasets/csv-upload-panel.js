@@ -4,22 +4,22 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Card from "@/components/ui/card";
 import StatusPill from "@/components/ui/status-pill";
+import { ingestLocalDatasetFile } from "@/lib/indexeddb/client-upload-service";
 
 function formatFileSize(size) {
-  if (!size) {
-    return "0 KB";
-  }
-
-  if (size < 1024 * 1024) {
-    return `${(size / 1024).toFixed(1)} KB`;
-  }
-
+  if (!size) return "0 KB";
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
   return `${(size / (1024 * 1024)).toFixed(2)} MB`;
 }
 
 function detectYearFromName(fileName) {
   const match = String(fileName || "").match(/20\d{2}/);
   return match ? match[0] : "No identificado";
+}
+
+function isAcceptedFile(fileName) {
+  const lower = String(fileName || "").toLowerCase();
+  return lower.endsWith(".csv") || lower.endsWith(".zip");
 }
 
 export default function CsvUploadPanel() {
@@ -37,7 +37,7 @@ export default function CsvUploadPanel() {
       };
     }
 
-    if (!file.name.toLowerCase().endsWith(".csv") && !file.name.toLowerCase().endsWith(".zip")) {
+    if (!isAcceptedFile(file.name)) {
       return {
         tone: "error",
         message: "El archivo seleccionado no tiene extension .csv o .zip.",
@@ -47,8 +47,8 @@ export default function CsvUploadPanel() {
     return {
       tone: "clean",
       message: file.name.toLowerCase().endsWith(".zip")
-        ? "ZIP valido. Se buscara un CSV dentro de la carpeta CSV y se filtrara Pasto."
-        : "CSV valido. La estructura se validara y se filtrara Pasto al subir el archivo.",
+        ? "ZIP valido. Se buscara un CSV en cualquier carpeta del ZIP."
+        : "CSV valido. Se validara estructura y se filtrara Pasto en procesamiento local.",
     };
   }, [file]);
 
@@ -62,26 +62,22 @@ export default function CsvUploadPanel() {
       return;
     }
 
-    const formData = new FormData();
-    formData.append("file", file);
+    if (!isAcceptedFile(file.name)) {
+      setError("El archivo debe tener extension .csv o .zip.");
+      return;
+    }
+
     setIsUploading(true);
-
     try {
-      const response = await fetch("/api/datasets", {
-        method: "POST",
-        body: formData,
-      });
-      const data = await response.json();
-
-      if (!data.dataset) {
-        setError(data.error || "No fue posible procesar el archivo.");
+      const data = await ingestLocalDatasetFile(file);
+      if (!data?.dataset) {
+        setError(data?.error || "No fue posible procesar el archivo local.");
         return;
       }
 
       setResult(data);
-      router.refresh();
-    } catch {
-      setError("Ocurrio un error inesperado al subir el archivo.");
+    } catch (caughtError) {
+      setError(caughtError?.message || "Ocurrio un error inesperado al procesar el archivo.");
     } finally {
       setIsUploading(false);
     }
@@ -91,7 +87,7 @@ export default function CsvUploadPanel() {
     <div className="mx-auto flex w-full max-w-[900px] min-w-0 flex-col gap-5 sm:gap-6">
       <Card
         title="Ingresar nuevo CSV o ZIP"
-        subtitle="Sube un archivo del DANE para validarlo, extraerlo si viene en ZIP, filtrar Pasto y dejarlo disponible en datasets."
+        subtitle="Sube un archivo del DANE para validarlo, procesarlo y guardarlo en IndexedDB del navegador actual."
         interactive
       >
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -108,16 +104,14 @@ export default function CsvUploadPanel() {
             />
             <span className="text-lg font-semibold text-foreground">Seleccionar archivo CSV o ZIP</span>
             <span className="mt-3 block text-sm leading-6 text-muted">
-              Si subes un ZIP, se leera el CSV ubicado dentro de la carpeta CSV. El original no se modifica.
+              Los datos se guardan en el navegador actual. Si subes ZIP, se detecta automaticamente un CSV interno.
             </span>
           </label>
 
           <div className="rounded-[24px] border border-line bg-white px-5 py-5">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="font-mono text-[11px] uppercase tracking-[0.26em] text-muted">
-                  Validacion inicial
-                </p>
+                <p className="font-mono text-[11px] uppercase tracking-[0.26em] text-muted">Validacion inicial</p>
                 <p className="mt-2 text-sm leading-6 text-muted">{validation.message}</p>
               </div>
               <StatusPill status={validation.tone} />
@@ -141,36 +135,26 @@ export default function CsvUploadPanel() {
       </Card>
 
       <div className="space-y-6">
-        <Card title="Resumen del archivo" subtitle="Informacion local detectada antes de enviar el archivo al servidor.">
+        <Card title="Resumen del archivo" subtitle="Informacion local detectada antes de guardar en IndexedDB.">
           <dl className="grid items-stretch gap-4 md:grid-cols-2">
             <div className="rounded-[24px] border border-line bg-surface px-5 py-5">
-              <dt className="font-mono text-[11px] uppercase tracking-[0.26em] text-muted">
-                Nombre
-              </dt>
+              <dt className="font-mono text-[11px] uppercase tracking-[0.26em] text-muted">Nombre</dt>
               <dd className="mt-3 break-all text-sm font-semibold text-foreground">
                 {file?.name || "Sin archivo seleccionado"}
               </dd>
             </div>
             <div className="rounded-[24px] border border-line bg-surface px-5 py-5">
-              <dt className="font-mono text-[11px] uppercase tracking-[0.26em] text-muted">
-                Tamano
-              </dt>
-              <dd className="mt-3 text-sm font-semibold text-foreground">
-                {file ? formatFileSize(file.size) : "N/D"}
-              </dd>
+              <dt className="font-mono text-[11px] uppercase tracking-[0.26em] text-muted">Tamano</dt>
+              <dd className="mt-3 text-sm font-semibold text-foreground">{file ? formatFileSize(file.size) : "N/D"}</dd>
             </div>
             <div className="rounded-[24px] border border-line bg-surface px-5 py-5">
-              <dt className="font-mono text-[11px] uppercase tracking-[0.26em] text-muted">
-                Año detectado
-              </dt>
+              <dt className="font-mono text-[11px] uppercase tracking-[0.26em] text-muted">Ano detectado</dt>
               <dd className="mt-3 text-sm font-semibold text-foreground">
                 {file ? detectYearFromName(file.name) : "N/D"}
               </dd>
             </div>
             <div className="rounded-[24px] border border-line bg-surface px-5 py-5">
-              <dt className="font-mono text-[11px] uppercase tracking-[0.26em] text-muted">
-                Estado esperado
-              </dt>
+              <dt className="font-mono text-[11px] uppercase tracking-[0.26em] text-muted">Estado esperado</dt>
               <dd className="mt-3 text-sm font-semibold text-foreground">
                 {file ? "Pendiente de validacion estructural" : "Pendiente"}
               </dd>
@@ -179,17 +163,22 @@ export default function CsvUploadPanel() {
         </Card>
 
         {result?.dataset ? (
-          <Card title="Resultado del procesamiento" subtitle="El dataset ya quedo registrado en la sesion y aparecera en el listado.">
+          <Card
+            title="Resultado del procesamiento"
+            subtitle="El dataset quedo registrado en IndexedDB y aparece en el listado local."
+          >
             <div className="space-y-4">
               <div className="flex flex-col gap-4 rounded-[24px] border border-line bg-surface px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
                   <p className="break-all text-sm font-semibold text-foreground">{result.dataset.fileName}</p>
                   <p className="mt-1 text-sm text-muted">
-                    Estado: {result.dataset.status} - Año: {result.dataset.detectedYear || "Pendiente"} - Filas Pasto: {result.dataset.rowCount}
+                    Estado: {result.dataset.status} - Ano: {result.dataset.detectedYear || "No identificado"} -
+                    Filas Pasto: {result.dataset.rowCount}
                   </p>
                 </div>
                 <StatusPill status={result.dataset.status} />
               </div>
+
               {result.issues?.length ? (
                 <ul className="space-y-2 text-sm leading-6 text-amber-700">
                   {result.issues.map((issue) => (
@@ -200,9 +189,10 @@ export default function CsvUploadPanel() {
                 </ul>
               ) : (
                 <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                  Archivo recibido. El procesamiento continua en segundo plano y puedes seguir navegando.
+                  Archivo guardado en almacenamiento local del navegador actual.
                 </p>
               )}
+
               <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <button
                   type="button"
@@ -210,13 +200,6 @@ export default function CsvUploadPanel() {
                   className="rounded-2xl border border-line bg-white px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-slate-50"
                 >
                   Ver listado
-                </button>
-                <button
-                  type="button"
-                  onClick={() => router.push(`/datasets/${result.dataset.id}`)}
-                  className="rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
-                >
-                  Abrir detalle
                 </button>
                 <button
                   type="button"
@@ -233,3 +216,4 @@ export default function CsvUploadPanel() {
     </div>
   );
 }
+

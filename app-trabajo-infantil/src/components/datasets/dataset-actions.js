@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { deleteDatasetLocal } from "@/lib/indexeddb/repository";
 
 export default function DatasetActions({ dataset }) {
   const router = useRouter();
   const [isBusy, setIsBusy] = useState(false);
   const canMutate = !dataset.isPrimary && dataset.sourceType === "upload";
+  const isIndexedDbDataset = dataset.storageEngine === "indexeddb";
 
   async function reprocessDataset() {
     setIsBusy(true);
@@ -40,6 +42,21 @@ export default function DatasetActions({ dataset }) {
     }
   }
 
+  async function deleteDatasetIndexedDb() {
+    const confirmed = window.confirm(
+      `Eliminar el dataset ${dataset.fileName}? Esta accion borra la copia local del navegador.`
+    );
+    if (!confirmed) return;
+
+    setIsBusy(true);
+    try {
+      await deleteDatasetLocal(dataset.id);
+      router.refresh();
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
   return (
     <div className="flex min-w-0 flex-wrap gap-2">
       <Link
@@ -48,7 +65,7 @@ export default function DatasetActions({ dataset }) {
       >
         Ver detalle
       </Link>
-      {dataset.status === "clean" ? (
+      {!isIndexedDbDataset && dataset.status === "clean" ? (
         <a
           href={`/api/datasets/${dataset.id}/export?format=csv`}
           className="inline-flex items-center justify-center rounded-full border border-line bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-accent hover:bg-slate-50"
@@ -56,7 +73,17 @@ export default function DatasetActions({ dataset }) {
           Exportar CSV
         </a>
       ) : null}
-      {canMutate ? (
+      {isIndexedDbDataset && !dataset.isPrimary ? (
+        <button
+          type="button"
+          onClick={deleteDatasetIndexedDb}
+          disabled={isBusy}
+          className="inline-flex items-center justify-center rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          Eliminar local
+        </button>
+      ) : null}
+      {!isIndexedDbDataset && canMutate ? (
         <>
           <button
             type="button"
