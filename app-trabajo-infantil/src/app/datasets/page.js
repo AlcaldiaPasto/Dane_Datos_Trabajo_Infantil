@@ -7,7 +7,7 @@ export default function DatasetsPage() {
   return (
     <AppShell
       title="Gestion de datasets"
-      description="Panel administrativo para revisar archivos cargados, estado de procesamiento, Ano detectado, volumen y acceso al detalle."
+      description="Panel administrativo para revisar archivos cargados, estado de procesamiento, Año detectado, volumen y acceso al detalle."
       sidebarContext={{
         eyebrow: "Panel administrativo",
         title: "Gestion de datasets",
@@ -20,4 +20,3 @@ export default function DatasetsPage() {
     </AppShell>
   );
 }
-

@@ -29,13 +29,13 @@ function ComparisonControls({ years, baseYear, targetYear, allYearsValue }) {
   }
 
   return (
-    <Card title="Seleccionar comparacion" subtitle="Compara trabajo infantil entre dos anos o en todos los anos disponibles.">
+    <Card title="Seleccionar comparacion" subtitle="Compara trabajo infantil entre dos años o en todos los años disponibles.">
       <form
         onSubmit={handleSubmit}
         className="grid min-w-0 gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] xl:items-end"
       >
         <label className="block">
-          <span className="font-mono text-[11px] uppercase tracking-[0.24em] text-muted">Ano base</span>
+          <span className="font-mono text-[11px] uppercase tracking-[0.24em] text-muted">Año base</span>
           <select
             value={baseValue}
             onChange={(event) => setBaseValue(event.target.value)}
@@ -49,13 +49,13 @@ function ComparisonControls({ years, baseYear, targetYear, allYearsValue }) {
           </select>
         </label>
         <label className="block">
-          <span className="font-mono text-[11px] uppercase tracking-[0.24em] text-muted">Ano comparado</span>
+          <span className="font-mono text-[11px] uppercase tracking-[0.24em] text-muted">Año comparado</span>
           <select
             value={targetValue}
             onChange={(event) => setTargetValue(event.target.value)}
             className="mt-2 w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm font-semibold text-foreground outline-none transition focus:border-accent focus:ring-4 focus:ring-teal-100"
           >
-            <option value={allYearsValue}>Todos los anos</option>
+            <option value={allYearsValue}>Todos los años</option>
             {years.map((year) => (
               <option key={`target-${year}`} value={year}>
                 {year}
@@ -169,7 +169,7 @@ export default function ComparisonIndexedDbPage() {
       ) : (
         <Card
           title="Graficas de tendencia no disponibles aun"
-          subtitle="Las tres graficas de linea por indicador aparecen cuando comparas 3 o mas anos y existe cobertura comparable."
+          subtitle="Las tres graficas de línea por indicador aparecen cuando comparas 3 o más años y existe cobertura comparable."
         />
       )}
     </div>

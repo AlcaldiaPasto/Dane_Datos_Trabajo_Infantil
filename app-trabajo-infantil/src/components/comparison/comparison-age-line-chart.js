@@ -11,6 +11,15 @@ export default function ComparisonAgeLineChart({ snapshot }) {
     () => snapshot?.childLaborAgeChart || { categories: [], series: [], hasComparableCoverage: false },
     [snapshot]
   );
+
+  const visibleSeries = useMemo(
+    () =>
+      (chart.series || []).filter(
+        (seriesItem) => Array.isArray(seriesItem.data) && seriesItem.data.some((value) => Number.isFinite(value))
+      ),
+    [chart]
+  );
+
   const option = useMemo(
     () => ({
       color: SERIES_COLORS,
@@ -38,7 +47,7 @@ export default function ComparisonAgeLineChart({ snapshot }) {
         axisLabel: { color: "#64748b" },
         splitLine: { lineStyle: { color: "rgba(15,23,42,0.08)" } },
       },
-      series: chart.series.map((seriesItem) => ({
+      series: visibleSeries.map((seriesItem) => ({
         name: seriesItem.name,
         type: "line",
         smooth: true,
@@ -48,22 +57,22 @@ export default function ComparisonAgeLineChart({ snapshot }) {
         data: seriesItem.data,
       })),
     }),
-    [chart]
+    [chart, visibleSeries]
   );
 
-  if (!chart.hasComparableCoverage) {
+  if (!chart.hasComparableCoverage || visibleSeries.length < 2) {
     return (
       <Card
-        title="Tendencia de trabajo infantil por edad entre años (linea)"
-        subtitle="No comparable por falta de columnas de edad o trabajo infantil ampliado en los años seleccionados."
+        title="Tendencia de trabajo infantil por edad entre años (línea)"
+        subtitle="No comparable por falta de columnas o por ausencia de casos de trabajo infantil ampliado en los años seleccionados."
       />
     );
   }
 
   return (
     <Card
-      title="Tendencia de trabajo infantil por edad entre años (linea)"
-      subtitle="Cantidad de menores en trabajo infantil ampliado por edad para identificar picos o caidas entre años."
+      title="Tendencia de trabajo infantil por edad entre años (línea)"
+      subtitle="Cantidad de menores en trabajo infantil ampliado por edad para identificar picos o caídas entre años."
       interactive
     >
       <EChartBase option={option} height={300} />

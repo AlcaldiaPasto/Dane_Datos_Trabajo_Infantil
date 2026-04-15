@@ -44,7 +44,7 @@ function buildProcessLogs({ now, parsed, detectedYear, validation, status, pasto
       at: now,
       step: "deteccion_anio",
       status: detectedYear ? "complete" : "warning",
-      message: detectedYear ? `Ano detectado: ${detectedYear}.` : "No fue posible detectar el ano.",
+      message: detectedYear ? `Año detectado: ${detectedYear}.` : "No fue posible detectar el año.",
     },
     {
       at: now,
@@ -64,7 +64,7 @@ function buildIssues({ parsed, validation, detectedYear, indicatorCoverage, past
     ...validation.missingColumns.map((column) => `Falta columna obligatoria: ${column}`),
     ...validation.warnings.slice(0, 50),
     ...pastoFilter.issues,
-    ...(detectedYear ? [] : ["No se pudo detectar el ano desde columna ni nombre de archivo."]),
+    ...(detectedYear ? [] : ["No se pudo detectar el año desde columna ni nombre de archivo."]),
     ...(!indicatorCoverage.economicWork ? ["Cobertura parcial: faltan columnas de trabajo economico."] : []),
     ...(!indicatorCoverage.intensiveChores ? ["Cobertura parcial: faltan columnas de oficios intensivos."] : []),
     ...(!indicatorCoverage.expandedChildLabor
@@ -171,4 +171,3 @@ export function buildDatasetFromCsvText({
     process,
   };
 }
-

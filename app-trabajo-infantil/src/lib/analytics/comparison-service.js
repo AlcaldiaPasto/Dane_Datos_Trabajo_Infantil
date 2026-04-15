@@ -87,7 +87,11 @@ function buildChildLaborAgeChart(records, summaries, years) {
 
   const series = years.map((year) => {
     const summary = summaryByYear[year];
-    const hasCoverage = Boolean(summary?.expandedChildLaborComparable && summary?.ageAvailable);
+    const hasCoverage = Boolean(
+      summary?.expandedChildLaborComparable &&
+        summary?.ageAvailable &&
+        Number(summary?.expandedChildLaborTotal || 0) > 0
+    );
     const ageCountMap = filtered
       .filter((record) => Number(record.year) === Number(year))
       .reduce((accumulator, row) => {

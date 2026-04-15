@@ -7,11 +7,11 @@ export default function ComparisonPage() {
   return (
     <AppShell
       title="Comparacion anual"
-      description="Comparacion real entre anos limpios disponibles en el almacenamiento local."
+      description="Comparacion real entre años limpios disponibles en el almacenamiento local."
       sidebarContext={{
         eyebrow: "Analisis anual",
         title: "Comparacion anual",
-        description: "Compara indicadores y distribucion por edad entre anos limpios y validados.",
+        description: "Compara indicadores y distribucion por edad entre años limpios y validados.",
         badge: "Comparacion local",
       }}
     >
@@ -19,4 +19,3 @@ export default function ComparisonPage() {
     </AppShell>
   );
 }
-

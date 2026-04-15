@@ -109,7 +109,7 @@ export default function FilterPanel({
         </div>
 
         <div className="grid gap-3 xl:grid-cols-2">
-          <FilterSelect label="Ano" value={filters.year} options={options.years} onChange={(value) => onChange("year", value)} />
+          <FilterSelect label="Año" value={filters.year} options={options.years} onChange={(value) => onChange("year", value)} />
           <FilterSelect label="Sexo" value={filters.sex} options={options.sex} onChange={(value) => onChange("sex", value)} />
           <FilterSelect label="Edad" value={filters.age} options={options.ages} onChange={(value) => onChange("age", value)} />
           <FilterSelect
@@ -135,4 +135,3 @@ export default function FilterPanel({
     </Card>
   );
 }
-
