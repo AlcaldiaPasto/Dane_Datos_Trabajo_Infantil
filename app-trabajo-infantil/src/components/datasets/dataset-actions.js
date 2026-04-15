@@ -3,46 +3,15 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { reprocessLocalDatasetById } from "@/lib/indexeddb/client-upload-service";
 import { deleteDatasetLocal } from "@/lib/indexeddb/repository";
 
 export default function DatasetActions({ dataset }) {
   const router = useRouter();
   const [isBusy, setIsBusy] = useState(false);
   const canMutate = !dataset.isPrimary && dataset.sourceType === "upload";
-  const isIndexedDbDataset = dataset.storageEngine === "indexeddb";
 
-  async function reprocessDataset() {
-    setIsBusy(true);
-    try {
-      const response = await fetch(`/api/datasets/${dataset.id}/reprocess`, { method: "POST" });
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        window.alert(data.error || "No fue posible reprocesar el dataset.");
-      }
-      router.refresh();
-    } finally {
-      setIsBusy(false);
-    }
-  }
-
-  async function deleteDataset() {
-    const confirmed = window.confirm(`Eliminar el dataset ${dataset.fileName}? Esta accion solo afecta la sesion local.`);
-    if (!confirmed) return;
-
-    setIsBusy(true);
-    try {
-      const response = await fetch(`/api/datasets/${dataset.id}`, { method: "DELETE" });
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        window.alert(data.error || "No fue posible eliminar el dataset.");
-      }
-      router.refresh();
-    } finally {
-      setIsBusy(false);
-    }
-  }
-
-  async function deleteDatasetIndexedDb() {
+  async function handleDeleteLocal() {
     const confirmed = window.confirm(
       `Eliminar el dataset ${dataset.fileName}? Esta accion borra la copia local del navegador.`
     );
@@ -57,6 +26,19 @@ export default function DatasetActions({ dataset }) {
     }
   }
 
+  async function handleReprocessLocal() {
+    setIsBusy(true);
+    try {
+      const result = await reprocessLocalDatasetById(dataset.id);
+      if (!result.ok) {
+        window.alert(result.error || "No fue posible reprocesar el dataset local.");
+      }
+      router.refresh();
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
   return (
     <div className="flex min-w-0 flex-wrap gap-2">
       <Link
@@ -65,44 +47,28 @@ export default function DatasetActions({ dataset }) {
       >
         Ver detalle
       </Link>
-      {!isIndexedDbDataset && dataset.status === "clean" ? (
-        <a
-          href={`/api/datasets/${dataset.id}/export?format=csv`}
-          className="inline-flex items-center justify-center rounded-full border border-line bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-accent hover:bg-slate-50"
-        >
-          Exportar CSV
-        </a>
-      ) : null}
-      {isIndexedDbDataset && !dataset.isPrimary ? (
-        <button
-          type="button"
-          onClick={deleteDatasetIndexedDb}
-          disabled={isBusy}
-          className="inline-flex items-center justify-center rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          Eliminar local
-        </button>
-      ) : null}
-      {!isIndexedDbDataset && canMutate ? (
+
+      {canMutate ? (
         <>
           <button
             type="button"
-            onClick={reprocessDataset}
+            onClick={handleReprocessLocal}
             disabled={isBusy}
             className="inline-flex items-center justify-center rounded-full border border-line bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-accent hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Reprocesar
+            Reprocesar local
           </button>
           <button
             type="button"
-            onClick={deleteDataset}
+            onClick={handleDeleteLocal}
             disabled={isBusy}
             className="inline-flex items-center justify-center rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Eliminar
+            Eliminar local
           </button>
         </>
       ) : null}
     </div>
   );
 }
+

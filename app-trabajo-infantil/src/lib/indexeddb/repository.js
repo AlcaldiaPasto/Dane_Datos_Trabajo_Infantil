@@ -1,6 +1,6 @@
 import { trabajoInfantilDb } from "@/lib/indexeddb/db";
 import { PRIMARY_YEAR } from "@/lib/constants/year-rules";
-import { serializeDataset } from "@/lib/datasets/dataset-serializer";
+import { serializeDataset } from "@/lib/indexeddb/dataset-serializer";
 
 export const BASE_DATASET_ID = "base-2024";
 export const GLOBAL_APP_STATE_ID = "global";
@@ -36,6 +36,10 @@ export async function listDatasetsLocal() {
 
 export async function listCleanDatasetsLocal() {
   return trabajoInfantilDb.datasets.where("status").equals("clean").toArray();
+}
+
+export async function listProcessRecordsLocal() {
+  return trabajoInfantilDb.processes.toArray();
 }
 
 export async function deleteDatasetLocal(datasetId) {

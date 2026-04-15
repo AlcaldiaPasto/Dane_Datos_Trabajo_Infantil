@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import Card from "@/components/ui/card";
+import { restoreLocalSessionFromZipFile } from "@/lib/indexeddb/session-bundle";
 
 function formatFileSize(bytes) {
   if (!Number.isFinite(bytes) || bytes <= 0) return "N/D";
@@ -17,40 +18,24 @@ export default function SessionRestorePanel() {
   const [message, setMessage] = useState("");
   const [result, setResult] = useState(null);
 
-  const canSubmit = useMemo(
-    () => file && status !== "uploading",
-    [file, status]
-  );
+  const canSubmit = useMemo(() => file && status !== "uploading", [file, status]);
 
   async function handleSubmit(event) {
     event.preventDefault();
     if (!file) return;
 
     setStatus("uploading");
-    setMessage("Restaurando sesion desde ZIP...");
+    setMessage("Restaurando sesion local desde ZIP...");
     setResult(null);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const response = await fetch("/api/session/import", {
-        method: "POST",
-        body: formData,
-      });
-      const payload = await response.json();
-
-      if (!response.ok) {
-        setStatus("error");
-        setMessage(payload.error || "No fue posible restaurar la sesion.");
-        return;
-      }
-
+      const payload = await restoreLocalSessionFromZipFile(file);
       setStatus("success");
       setResult(payload);
       setMessage(payload.message || "Sesion restaurada correctamente.");
-    } catch {
+    } catch (error) {
       setStatus("error");
-      setMessage("Error de red al restaurar la sesion.");
+      setMessage(error?.message || "No fue posible restaurar la sesion local.");
     }
   }
 
@@ -58,13 +43,13 @@ export default function SessionRestorePanel() {
     <div className="grid w-full max-w-5xl gap-5 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
       <Card
         title="Restaurar sesion desde ZIP"
-        subtitle="Carga un ZIP exportado previamente para recuperar datasets procesados, metadatos y estado de la sesion."
+        subtitle="Carga un ZIP exportado previamente para recuperar datasets procesados, metadatos y estado local."
         interactive
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <label className="block rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-5 py-7 text-center">
             <span className="text-xl font-semibold text-foreground">Seleccionar ZIP de sesion</span>
-            <p className="mt-2 text-sm text-muted">Debe ser un archivo generado desde “Descargar ZIP de sesion”.</p>
+            <p className="mt-2 text-sm text-muted">Debe ser un archivo generado desde &quot;Descargar ZIP de sesion&quot;.</p>
             <input
               type="file"
               accept=".zip,application/zip"
@@ -94,7 +79,7 @@ export default function SessionRestorePanel() {
 
       <Card
         title="Resultado de restauracion"
-        subtitle="Al restaurar, se reemplaza la sesion activa actual por la informacion del ZIP cargado."
+        subtitle="Al restaurar, se reemplaza la sesion local actual por la informacion del ZIP cargado."
         interactive
       >
         <div className="space-y-3">
@@ -112,7 +97,7 @@ export default function SessionRestorePanel() {
           {result ? (
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="rounded-2xl border border-line bg-white px-4 py-3">
-                <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-muted">Archivos restaurados</p>
+                <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-muted">Bloques restaurados</p>
                 <p className="mt-2 text-2xl font-semibold text-foreground">{result.restoredFiles}</p>
               </div>
               <div className="rounded-2xl border border-line bg-white px-4 py-3">
@@ -123,10 +108,16 @@ export default function SessionRestorePanel() {
           ) : null}
 
           <div className="grid gap-2 sm:grid-cols-2">
-            <Link href="/datasets" className="inline-flex h-10 items-center justify-center rounded-2xl border border-line bg-white text-sm font-semibold text-foreground transition hover:border-accent hover:bg-accent-soft">
+            <Link
+              href="/datasets"
+              className="inline-flex h-10 items-center justify-center rounded-2xl border border-line bg-white text-sm font-semibold text-foreground transition hover:border-accent hover:bg-accent-soft"
+            >
               Ir a datasets
             </Link>
-            <Link href="/" className="inline-flex h-10 items-center justify-center rounded-2xl border border-line bg-white text-sm font-semibold text-foreground transition hover:border-accent hover:bg-accent-soft">
+            <Link
+              href="/"
+              className="inline-flex h-10 items-center justify-center rounded-2xl border border-line bg-white text-sm font-semibold text-foreground transition hover:border-accent hover:bg-accent-soft"
+            >
               Ir al dashboard
             </Link>
           </div>
@@ -135,4 +126,3 @@ export default function SessionRestorePanel() {
     </div>
   );
 }
-

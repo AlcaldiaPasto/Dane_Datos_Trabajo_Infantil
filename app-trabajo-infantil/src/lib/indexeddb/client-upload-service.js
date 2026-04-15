@@ -2,7 +2,7 @@ import { DATASET_STATUS } from "@/lib/constants/dataset-status";
 import { buildDatasetFromCsvText } from "@/lib/indexeddb/client-dataset-processing";
 import { ensureClientBootstrap } from "@/lib/indexeddb/bootstrap";
 import { extractCsvInputFromFile } from "@/lib/indexeddb/client-file-extractor";
-import { putDataset, putProcess } from "@/lib/indexeddb/repository";
+import { getDatasetById, putDataset, putProcess } from "@/lib/indexeddb/repository";
 
 function buildDatasetId() {
   const randomPart =
@@ -122,3 +122,110 @@ export async function ingestLocalDatasetFile(file) {
   }
 }
 
+export async function reprocessLocalDatasetById(datasetId) {
+  await ensureClientBootstrap();
+  const existingDataset = await getDatasetById(datasetId);
+
+  if (!existingDataset) {
+    return {
+      ok: false,
+      error: "Dataset no encontrado en almacenamiento local.",
+    };
+  }
+
+  if (existingDataset.isPrimary) {
+    return {
+      ok: false,
+      error: "El dataset base 2024 no se reprocesa manualmente.",
+    };
+  }
+
+  if (!existingDataset.rawCsvText) {
+    return {
+      ok: false,
+      error: "El dataset no tiene copia raw para reprocesar.",
+    };
+  }
+
+  const processingRecord = {
+    id: `process-${datasetId}`,
+    datasetId,
+    status: DATASET_STATUS.PROCESSING,
+    currentStep: "processing",
+    startedAt: new Date().toISOString(),
+    finishedAt: null,
+    logs: [
+      {
+        at: new Date().toISOString(),
+        step: "reproceso",
+        status: "processing",
+        message: "Reprocesando dataset local desde copia raw.",
+      },
+    ],
+    errorMessage: null,
+  };
+
+  await putProcess(processingRecord);
+
+  try {
+    const { dataset, process } = buildDatasetFromCsvText({
+      datasetId,
+      sourceType: existingDataset.sourceType || "upload",
+      fileName: existingDataset.fileName,
+      csvText: existingDataset.rawCsvText,
+      forcedYear:
+        existingDataset.yearSource === "seed" && Number.isFinite(Number(existingDataset.detectedYear))
+          ? Number(existingDataset.detectedYear)
+          : null,
+      yearSource: existingDataset.yearSource || null,
+      isPrimary: Boolean(existingDataset.isPrimary),
+    });
+
+    const nextDataset = {
+      ...existingDataset,
+      ...dataset,
+      id: datasetId,
+      uploadedAt: existingDataset.uploadedAt || dataset.uploadedAt,
+      updatedAt: new Date().toISOString(),
+      archiveInfo: existingDataset.archiveInfo || null,
+      sourceCsvName: existingDataset.sourceCsvName || existingDataset.fileName,
+      originalFileName: existingDataset.originalFileName || existingDataset.fileName,
+    };
+
+    await putDataset(nextDataset);
+    await putProcess(process);
+
+    return {
+      ok: process.status === DATASET_STATUS.CLEAN,
+      dataset: nextDataset,
+      process,
+      issues: nextDataset.issues || [],
+      error: process.status === DATASET_STATUS.CLEAN ? null : process.errorMessage,
+    };
+  } catch (error) {
+    const failed = {
+      ...processingRecord,
+      status: DATASET_STATUS.ERROR,
+      currentStep: "error",
+      finishedAt: new Date().toISOString(),
+      logs: [
+        ...processingRecord.logs,
+        {
+          at: new Date().toISOString(),
+          step: "error",
+          status: "error",
+          message: error?.message || "Error inesperado durante el reproceso local.",
+        },
+      ],
+      errorMessage: error?.message || "Error inesperado durante el reproceso local.",
+    };
+
+    await putProcess(failed);
+    return {
+      ok: false,
+      error: failed.errorMessage,
+      issues: [failed.errorMessage],
+      process: failed,
+    };
+  }
+}

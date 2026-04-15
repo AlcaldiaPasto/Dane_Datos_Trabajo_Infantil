@@ -188,6 +188,8 @@ export default function Sidebar({ context }) {
   const pathname = usePathname();
   const [isDesktopOpen, setIsDesktopOpen] = useState(true);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isExportingSession, setIsExportingSession] = useState(false);
+  const [sessionExportStatus, setSessionExportStatus] = useState("");
   const showExpanded = isMobileOpen || isDesktopOpen;
 
   function toggleDesktopMenu() {
@@ -200,6 +202,20 @@ export default function Sidebar({ context }) {
 
   function closeMobileMenu() {
     setIsMobileOpen(false);
+  }
+
+  async function handleSessionExport() {
+    setSessionExportStatus("");
+    setIsExportingSession(true);
+    try {
+      const { downloadLocalSessionZip } = await import("@/lib/indexeddb/session-bundle");
+      await downloadLocalSessionZip();
+      setSessionExportStatus("ZIP descargado correctamente.");
+    } catch (error) {
+      setSessionExportStatus(error?.message || "No se pudo exportar la sesion local.");
+    } finally {
+      setIsExportingSession(false);
+    }
   }
 
   useEffect(() => {
@@ -329,12 +345,14 @@ export default function Sidebar({ context }) {
               Los datasets se guardan localmente en este navegador usando IndexedDB.
             </p>
             <div className="mt-3 grid gap-2">
-              <a
-                href="/api/session/export"
+              <button
+                type="button"
+                onClick={handleSessionExport}
+                disabled={isExportingSession}
                 className="inline-flex h-9 items-center justify-center rounded-2xl bg-teal-700 px-3 text-xs font-bold !text-white shadow-sm transition hover:bg-teal-600"
               >
-                Descargar ZIP de sesion
-              </a>
+                {isExportingSession ? "Exportando..." : "Descargar ZIP de sesion"}
+              </button>
               <Link
                 href="/sesion/restaurar"
                 onClick={closeMobileMenu}
@@ -343,6 +361,9 @@ export default function Sidebar({ context }) {
                 Cargar ZIP de sesion
               </Link>
             </div>
+            {sessionExportStatus ? (
+              <p className="mt-2 text-xs text-muted">{sessionExportStatus}</p>
+            ) : null}
           </div>
         ) : null}
       </aside>

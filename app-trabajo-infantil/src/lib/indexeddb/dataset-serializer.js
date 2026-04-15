@@ -1,6 +1,6 @@
 import { UNKNOWN_YEAR_LABEL } from "@/lib/constants/year-rules";
-import { formatDateTime } from "@/lib/utils/dates";
 import { withCoverageFallback } from "@/lib/analytics/indicator-coverage";
+import { formatDateTime } from "@/lib/utils/dates";
 
 export function serializeDataset(dataset) {
   return {

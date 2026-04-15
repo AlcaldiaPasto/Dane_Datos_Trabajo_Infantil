@@ -46,7 +46,6 @@ function buildSummaryPayload(dataset) {
 
 export default function DatasetExportPanel({ dataset }) {
   const canExport = dataset.status === "clean";
-  const isIndexedDbDataset = dataset.storageEngine === "indexeddb";
   const baseName = normalizeBaseName(dataset.fileName);
 
   function exportCsvLocal() {
@@ -83,31 +82,15 @@ export default function DatasetExportPanel({ dataset }) {
     >
       {canExport ? (
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-          {isIndexedDbDataset ? (
-            <>
-              <button type="button" onClick={exportCsvLocal} className={buttonClass}>
-                CSV procesado
-              </button>
-              <button type="button" onClick={exportJsonLocal} className={buttonClass}>
-                JSON procesado
-              </button>
-              <button type="button" onClick={exportSummaryLocal} className={buttonClass}>
-                Resumen JSON
-              </button>
-            </>
-          ) : (
-            <>
-              <a href={`/api/datasets/${dataset.id}/export?format=csv`} className={buttonClass}>
-                CSV procesado
-              </a>
-              <a href={`/api/datasets/${dataset.id}/export?format=json`} className={buttonClass}>
-                JSON procesado
-              </a>
-              <a href={`/api/datasets/${dataset.id}/export?format=summary`} className={buttonClass}>
-                Resumen JSON
-              </a>
-            </>
-          )}
+          <button type="button" onClick={exportCsvLocal} className={buttonClass}>
+            CSV procesado
+          </button>
+          <button type="button" onClick={exportJsonLocal} className={buttonClass}>
+            JSON procesado
+          </button>
+          <button type="button" onClick={exportSummaryLocal} className={buttonClass}>
+            Resumen JSON
+          </button>
         </div>
       ) : (
         <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
