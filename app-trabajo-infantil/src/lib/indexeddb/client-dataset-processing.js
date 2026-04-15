@@ -98,7 +98,7 @@ export function buildDatasetFromCsvText({
   const detectedYearSource =
     yearSource ||
     (forcedYear ? "seed" : detectedYearFromRows ? "column" : detectedYearFromName ? "filename" : "unknown");
-  const indicatorCoverage = detectIndicatorCoverage(parsed.headers);
+  const indicatorCoverage = detectIndicatorCoverage(parsed.headers, parsed.rows);
   const status = validation.isValid ? DATASET_STATUS.CLEAN : DATASET_STATUS.ERROR;
   const cleanResult = validation.isValid
     ? cleanRows(parsed.rows, {

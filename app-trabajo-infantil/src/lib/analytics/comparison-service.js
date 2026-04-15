@@ -135,13 +135,24 @@ function buildIndicatorChart(seriesByYear) {
 }
 
 function buildIndicatorTrendCharts(seriesByYear) {
-  const years = seriesByYear.map((item) => String(item.year));
+  function toSeries(getValue) {
+    const points = seriesByYear
+      .map((item) => ({
+        year: String(item.year),
+        value: getValue(item),
+      }))
+      .filter((item) => item.value !== null);
+
+    return {
+      years: points.map((item) => item.year),
+      values: points.map((item) => item.value),
+    };
+  }
 
   return {
-    years,
-    economicWork: seriesByYear.map((item) => toPercentOrNull(item.economicWorkPct)),
-    intensiveChores: seriesByYear.map((item) => toPercentOrNull(item.intensiveChoresPct)),
-    expandedChildLabor: seriesByYear.map((item) => toPercentOrNull(item.expandedChildLaborPct)),
+    economicWork: toSeries((item) => toPercentOrNull(item.economicWorkPct)),
+    intensiveChores: toSeries((item) => toPercentOrNull(item.intensiveChoresPct)),
+    expandedChildLabor: toSeries((item) => toPercentOrNull(item.expandedChildLaborPct)),
   };
 }
 

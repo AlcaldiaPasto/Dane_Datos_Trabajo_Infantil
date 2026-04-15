@@ -5,6 +5,7 @@ import EChartBase from "@/components/charts/echart-base";
 import Card from "@/components/ui/card";
 
 export default function PieChart({ title, subtitle, slices, height = 280 }) {
+  const hasData = Array.isArray(slices) && slices.some((slice) => Number(slice?.value || 0) > 0);
   const option = useMemo(
     () => ({
       color: ["#0f766e", "#1d4ed8", "#f59e0b", "#e11d48"],
@@ -35,6 +36,15 @@ export default function PieChart({ title, subtitle, slices, height = 280 }) {
     }),
     [slices]
   );
+
+  if (!hasData) {
+    return (
+      <Card
+        title={title}
+        subtitle={`${subtitle} No disponible para el año o filtros activos por falta de datos comparables.`}
+      />
+    );
+  }
 
   return (
     <Card title={title} subtitle={subtitle} interactive className="h-full overflow-hidden p-4">

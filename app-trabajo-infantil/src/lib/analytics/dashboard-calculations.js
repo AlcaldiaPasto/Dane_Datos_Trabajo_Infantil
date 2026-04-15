@@ -6,12 +6,26 @@ export const ALL_FILTER_VALUE = "all";
 
 export function getWeeklyDomesticHours(row) {
   let totalHours = 0;
+  let hasAnyDomesticData = false;
 
   for (let question = 3131; question <= 3136; question += 1) {
     for (let section = 1; section <= 3; section += 1) {
       const baseKey = `P${question}S${section}`;
-      const days = Number(row[`${baseKey}A1`] || 0);
-      const hours = Number(row[`${baseKey}A2`] || 0);
+      const baseValue = row[baseKey];
+      const daysValue = row[`${baseKey}A1`];
+      const hoursValue = row[`${baseKey}A2`];
+      const days = Number(daysValue || 0);
+      const hours = Number(hoursValue || 0);
+
+      if (baseValue !== undefined && baseValue !== null && String(baseValue).trim() !== "") {
+        hasAnyDomesticData = true;
+      }
+      if (daysValue !== undefined && daysValue !== null && String(daysValue).trim() !== "") {
+        hasAnyDomesticData = true;
+      }
+      if (hoursValue !== undefined && hoursValue !== null && String(hoursValue).trim() !== "") {
+        hasAnyDomesticData = true;
+      }
 
       if (row[baseKey] === "1" && days > 0 && hours > 0) {
         totalHours += days * hours;
@@ -19,21 +33,32 @@ export function getWeeklyDomesticHours(row) {
     }
   }
 
-  return totalHours;
+  return hasAnyDomesticData ? totalHours : null;
 }
 
 export function getDomesticCategory(hours) {
+  if (hours === null || hours === undefined || !Number.isFinite(Number(hours))) return null;
   if (hours === 0) return "Sin oficios";
   if (hours <= 6) return "Apoyo domestico ligero";
   if (hours <= 14) return "Apoyo domestico moderado";
   return "Oficios intensivos";
 }
 
+function hasValue(value) {
+  return value !== null && value !== undefined && String(value).trim() !== "";
+}
+
+function hasAnyValue(row, columns) {
+  return columns.some((column) => hasValue(row[column]));
+}
+
 export function isEconomicWork(row) {
+  if (!hasAnyValue(row, ["P400", "P401", "P402", "P403"])) return null;
   return row.P400 === "1" || row.P401 === "1" || row.P402 === "1" || row.P403 === "1";
 }
 
 export function isStudying(row) {
+  if (!hasAnyValue(row, ["P6160", "P6170", "P400"])) return null;
   return row.P6160 === "1" || row.P6170 === "1" || row.P400 === "3";
 }
 
@@ -49,8 +74,11 @@ export function deriveDashboardRecord(row, dataset, index = 0) {
   const economicWork = coverage.economicWork ? isEconomicWork(row) : null;
   const studies = coverage.studies ? isStudying(row) : null;
   const domesticHours = coverage.domesticHours ? getWeeklyDomesticHours(row) : null;
-  const intensiveChores = coverage.intensiveChores ? domesticHours > 14 : null;
-  const expandedChildLabor = coverage.expandedChildLabor ? Boolean(economicWork || intensiveChores) : null;
+  const intensiveChores = coverage.intensiveChores && domesticHours !== null ? domesticHours > 14 : null;
+  const expandedChildLabor =
+    coverage.expandedChildLabor && economicWork !== null && intensiveChores !== null
+      ? Boolean(economicWork || intensiveChores)
+      : null;
   const age = coverage.age ? Number(row.P6040 || 0) || null : null;
 
   return {
@@ -71,10 +99,12 @@ export function deriveDashboardRecord(row, dataset, index = 0) {
     intensiveChores,
     expandedChildLabor,
     domesticHours,
-    domesticCategory: coverage.domesticHours ? getDomesticCategory(domesticHours) : null,
-    situation: coverage.situation ? getSituation(studies, economicWork) : null,
+    domesticCategory: coverage.domesticHours && domesticHours !== null ? getDomesticCategory(domesticHours) : null,
+    situation: coverage.situation && studies !== null && economicWork !== null ? getSituation(studies, economicWork) : null,
     riskFinal: coverage.riskFinal
-      ? expandedChildLabor
+      ? expandedChildLabor === null
+        ? null
+        : expandedChildLabor
         ? "Trabajo infantil ampliado"
         : "Sin riesgo ampliado"
       : null,
@@ -150,9 +180,7 @@ function countBy(records, getKey) {
 }
 
 function toOrderedItems(counts, orderedLabels) {
-  return orderedLabels
-    .map((label) => ({ label, value: counts[label] || 0 }))
-    .filter((item) => item.value > 0 || orderedLabels.length <= 4);
+  return orderedLabels.map((label) => ({ label, value: counts[label] || 0 })).filter((item) => item.value > 0);
 }
 
 function buildDelta(years) {
@@ -365,4 +393,3 @@ export function buildDashboardSnapshotFromRecords(records, filters) {
     },
   };
 }
-
